@@ -1,0 +1,59 @@
+Metadata-Version: 2.4
+Name: northstar-backend
+Version: 0.1.0
+Summary: Northstar AI Agent - Autonomous experimentation platform
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.120.4
+Requires-Dist: uvicorn>=0.34.0
+Requires-Dist: metorial>=1.0.11
+Requires-Dist: metorial-google>=1.0.4
+Requires-Dist: openai>=2.6.1
+Requires-Dist: google-genai>=1.47.0
+Requires-Dist: langchain>=1.0.3
+Requires-Dist: langchain-openai>=1.0.1
+Requires-Dist: mcp>=1.2.0
+Requires-Dist: GitPython>=3.1.40
+Requires-Dist: PyGithub>=2.1.1
+Requires-Dist: python-dotenv>=1.2.1
+Requires-Dist: requests>=2.31.0
+
+# Northstar Backend
+
+FastAPI orchestrator + Northstar MCP Server
+
+## Structure
+
+```
+backend/
+├── main.py              # FastAPI orchestrator
+├── northstar_mcp/       # Custom MCP server
+│   ├── server.py       # MCP tool definitions
+│   ├── morph_client.py # Morph API client
+│   ├── git_ops.py      # Git automation
+│   ├── github_ops.py   # PR creation
+│   └── utils.py        # Utilities
+└── pyproject.toml      # Dependencies
+```
+
+## Setup
+
+```bash
+uv sync
+uvicorn main:app --reload
+```
+
+## API Endpoints
+
+- `GET /oauth/start` - Start Slack OAuth
+- `GET /oauth/complete` - Complete OAuth
+- `POST /northstar/propose` - Generate proposal
+- `POST /northstar/execute` - Execute experiment
+
+## MCP Tools
+
+### `propose_experiment()`
+Returns experiment proposals
+
+### `execute_code_change(instruction, update_block, repo, file_path)`
+Executes code changes via Morph and creates GitHub PR
