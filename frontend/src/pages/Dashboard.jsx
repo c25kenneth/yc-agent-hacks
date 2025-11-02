@@ -7,17 +7,119 @@ import { proposalsAPI, experimentsAPI, activityLogsAPI, repositoriesAPI } from '
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [proposals, setProposals] = useState([]);
-  const [rawExperiments, setRawExperiments] = useState([]); // Store raw experiment data
-  const [experiments, setExperiments] = useState([]); // Displayed experiments
-  const [activityLogs, setActivityLogs] = useState([]);
+  const [proposals, setProposals] = useState([
+    {
+      proposal_id: 1,
+      idea_summary: 'Reduce checkout form fields',
+      status: 'completed',
+      expected_impact: { delta_pct: 0.003, metric: 'Checkout Conversion' },
+      rationale: 'Simplified checkout flow by removing optional fields',
+      repo_id: 'unassigned',
+    },
+    {
+      proposal_id: 2,
+      idea_summary: 'Add trust badges to checkout',
+      status: 'approved',
+      expected_impact: { delta_pct: 0.002, metric: 'Checkout Conversion' },
+      rationale: 'Testing security badges above payment button',
+      repo_id: 'unassigned',
+    },
+    {
+      proposal_id: 3,
+      idea_summary: 'Optimize mobile checkout layout',
+      status: 'approved',
+      expected_impact: { delta_pct: 0.005, metric: 'Checkout Conversion' },
+      rationale: 'Improve mobile UX for checkout process',
+      repo_id: 'unassigned',
+    },
+    {
+      proposal_id: 4,
+      idea_summary: 'A/B test payment button color',
+      status: 'approved',
+      expected_impact: { delta_pct: 0.001, metric: 'Checkout Conversion' },
+      rationale: 'Testing green vs blue payment button',
+      repo_id: 'unassigned',
+    },
+  ]);
+  const [rawExperiments, setRawExperiments] = useState([
+    {
+      id: 2,
+      proposal_id: 2,
+      instruction: 'Add trust badges to checkout',
+      status: 'running',
+      pr_url: null,
+    },
+    {
+      id: 4,
+      proposal_id: 4,
+      instruction: 'A/B test payment button color',
+      status: 'running',
+      pr_url: null,
+    },
+  ]); // Store raw experiment data
+  const [experiments, setExperiments] = useState([
+    {
+      id: 1,
+      title: 'Reduce checkout form fields',
+      status: 'completed',
+      result: '0.3% improvement',
+      description: 'Simplified checkout flow by removing optional fields',
+      proposal_id: 1,
+    },
+    {
+      id: 2,
+      title: 'Add trust badges to checkout',
+      status: 'running',
+      result: 'In progress...',
+      description: 'Testing security badges above payment button',
+      proposal_id: 2,
+    },
+    {
+      id: 3,
+      title: 'Optimize mobile checkout layout',
+      status: 'approved',
+      result: 'Approved',
+      description: 'Improve mobile UX for checkout process',
+      proposal_id: 3,
+    },
+    {
+      id: 4,
+      title: 'A/B test payment button color',
+      status: 'running',
+      result: 'In progress...',
+      description: 'Testing green vs blue payment button',
+      proposal_id: 4,
+    },
+  ]); // Displayed experiments
+  const [activityLogs, setActivityLogs] = useState([
+    {
+      message: 'Analyzing checkout conversion trends...',
+      timestamp: 'Just now',
+    },
+    {
+      message: 'Detected +0.3% improvement in conversion rate',
+      timestamp: '2 minutes ago',
+    },
+    {
+      message: 'Reviewing experiment results from last week',
+      timestamp: '15 minutes ago',
+    },
+    {
+      message: 'Identified potential optimization in checkout flow',
+      timestamp: '1 hour ago',
+    },
+    {
+      message: 'Monitoring metric performance across mobile and desktop',
+      timestamp: '3 hours ago',
+    },
+  ]);
   const [repositories, setRepositories] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState(null); // null = all repos
-  const [loading, setLoading] = useState(true);
-  const [experimentsByRepo, setExperimentsByRepo] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadData();
+    // Comment out loadData to show demo data
+    // loadData();
   }, []);
 
   useEffect(() => {
@@ -99,9 +201,7 @@ const Dashboard = () => {
         proposal_id: e.proposal_id,
       });
     });
-    
-    setExperimentsByRepo(grouped);
-    
+
     // Update experiments list based on selected repo
     if (selectedRepo === null) {
       // Show all experiments
@@ -113,6 +213,8 @@ const Dashboard = () => {
     }
   };
 
+  // Commented out to show demo data - uncomment when backend is ready
+  // eslint-disable-next-line no-unused-vars
   const loadData = async () => {
     setLoading(true);
     try {
@@ -133,31 +235,81 @@ const Dashboard = () => {
       // Store raw experiments - will be organized by organizeByRepository useEffect
       setRawExperiments(experimentsResult.experiments);
       
-      // Format activity logs
-      const formattedLogs = logsResult.logs.map(log => {
-        const date = new Date(log.created_at);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
-        
-        let timestamp;
-        if (diffMins < 1) timestamp = 'Just now';
-        else if (diffMins < 60) timestamp = `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
-        else if (diffHours < 24) timestamp = `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
-        else timestamp = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+      // Format activity logs - fallback to demo data if no logs
+      let formattedLogs = [];
 
-        return {
-          message: log.message,
-          timestamp,
-        };
-      });
+      if (logsResult.logs && logsResult.logs.length > 0) {
+        formattedLogs = logsResult.logs.map(log => {
+          const date = new Date(log.created_at);
+          const now = new Date();
+          const diffMs = now - date;
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMs / 3600000);
+          const diffDays = Math.floor(diffMs / 86400000);
+
+          let timestamp;
+          if (diffMins < 1) timestamp = 'Just now';
+          else if (diffMins < 60) timestamp = `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
+          else if (diffHours < 24) timestamp = `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+          else timestamp = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+
+          return {
+            message: log.message,
+            timestamp,
+          };
+        });
+      } else {
+        // Demo agent activity
+        formattedLogs = [
+          {
+            message: 'Analyzing checkout conversion trends...',
+            timestamp: 'Just now',
+          },
+          {
+            message: 'Detected +0.3% improvement in conversion rate',
+            timestamp: '2 minutes ago',
+          },
+          {
+            message: 'Reviewing experiment results from last week',
+            timestamp: '15 minutes ago',
+          },
+          {
+            message: 'Identified potential optimization in checkout flow',
+            timestamp: '1 hour ago',
+          },
+          {
+            message: 'Monitoring metric performance across mobile and desktop',
+            timestamp: '3 hours ago',
+          },
+        ];
+      }
 
       setActivityLogs(formattedLogs);
     } catch (error) {
       console.error('Failed to load data:', error);
-      // Keep empty arrays on error
+      // Show demo data on error
+      setActivityLogs([
+        {
+          message: 'Analyzing checkout conversion trends...',
+          timestamp: 'Just now',
+        },
+        {
+          message: 'Detected +0.3% improvement in conversion rate',
+          timestamp: '2 minutes ago',
+        },
+        {
+          message: 'Reviewing experiment results from last week',
+          timestamp: '15 minutes ago',
+        },
+        {
+          message: 'Identified potential optimization in checkout flow',
+          timestamp: '1 hour ago',
+        },
+        {
+          message: 'Monitoring metric performance across mobile and desktop',
+          timestamp: '3 hours ago',
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -213,9 +365,6 @@ const Dashboard = () => {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Recent Experiments Feed */}
           <div className="lg:col-span-2">
-            <h2 className="mb-4 text-xl font-semibold text-white">
-              {selectedRepo ? `Experiments - ${repositories.find(r => r.id === selectedRepo)?.repo_fullname || 'Unknown'}` : 'Recent Experiments'}
-            </h2>
             {loading ? (
               <div className="text-center text-gray-400 py-8">Loading...</div>
             ) : experiments.length === 0 ? (
@@ -225,53 +374,21 @@ const Dashboard = () => {
                   : 'No experiments yet. Trigger one from Settings!'}
               </div>
             ) : (
-              <>
-                {/* Group by repository if showing all */}
-                {selectedRepo === null && Object.keys(experimentsByRepo).length > 0 ? (
-                  Object.entries(experimentsByRepo).map(([repoId, group]) => {
-                    if (group.proposals.length === 0 && group.experiments.length === 0) return null;
-                    return (
-                      <div key={repoId} className="mb-6">
-                        <h3 className="mb-3 text-lg font-semibold text-white flex items-center gap-2">
-                          <span className="text-gray-400">📁</span>
-                          {group.repo.repo_fullname || 'Unassigned'}
-                        </h3>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          {[...group.proposals, ...group.experiments].map((experiment, index) => (
-                            <div
-                              key={experiment.id || index}
-                              onClick={() => {
-                                if (experiment.proposal_id) {
-                                  navigate(`/experiments/${experiment.proposal_id}`);
-                                }
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <ExperimentCard {...experiment} />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {experiments.map((experiment, index) => (
-                      <div
-                        key={experiment.id || index}
-                        onClick={() => {
-                          if (experiment.proposal_id) {
-                            navigate(`/experiments/${experiment.proposal_id}`);
-                          }
-                        }}
-                        className="cursor-pointer"
-                      >
-                        <ExperimentCard {...experiment} />
-                      </div>
-                    ))}
+              <div className="grid gap-4 md:grid-cols-2">
+                {experiments.map((experiment, index) => (
+                  <div
+                    key={experiment.id || index}
+                    onClick={() => {
+                      if (experiment.proposal_id) {
+                        navigate(`/experiments/${experiment.proposal_id}`);
+                      }
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <ExperimentCard {...experiment} />
                   </div>
-                )}
-              </>
+                ))}
+              </div>
             )}
           </div>
 

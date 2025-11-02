@@ -1384,18 +1384,23 @@ async def reject_proposal(proposal_id: str):
     """
     try:
         proposal = db_operations.update_proposal_status(proposal_id, "rejected")
-        
+
         # Create activity log
         db_operations.create_activity_log(
             message=f"Rejected proposal {proposal_id}",
             proposal_id=proposal_id,
             log_type="info"
         )
-        
+
         return {
             "status": "success",
             "proposal": proposal
         }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Knowledge base endpoints

@@ -22,9 +22,20 @@ export default function Signup() {
 
     setLoading(false);
 
-    if (error) setError(error.message);
-    else if (data.user) {
-      navigate("/dashboard", { replace: true });
+    if (error) {
+      setError(error.message);
+    } else if (data.user) {
+      // Check if email confirmation is required
+      if (data.user.identities && data.user.identities.length === 0) {
+        // User already exists
+        setError("An account with this email already exists. Please log in instead.");
+      } else if (data.user.confirmed_at) {
+        // Email confirmation disabled - user can login immediately
+        navigate("/dashboard", { replace: true });
+      } else {
+        // Email confirmation required
+        setError("Success! Please check your email to confirm your account before logging in.");
+      }
     }
   };
 
