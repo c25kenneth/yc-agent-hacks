@@ -3,6 +3,7 @@ import Home from './pages/Home'
 import ProtectedRoute from './components/ProtectedRoutes'
 import Login from './pages/Login'
 import Signup from './pages/SIgnUp'
+import Landing from './pages/Landing'
 
 
 function App() {
@@ -10,7 +11,8 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={
+        <Route path="/" element={<Landing />} />
+        <Route path="/home" element={
             <ProtectedRoute>
               <Home />
             </ProtectedRoute>
