@@ -1,5 +1,4 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { proposalsAPI, experimentsAPI, oauthStorage } from '../api';
@@ -109,7 +108,7 @@ const ExperimentDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0B1A] flex items-center justify-center">
+      <div className="min-h-screen bg-[#111827] flex items-center justify-center">
         <p className="text-gray-400">Loading...</p>
       </div>
     );
@@ -117,12 +116,12 @@ const ExperimentDetails = () => {
 
   if (!proposal) {
     return (
-      <div className="min-h-screen bg-[#0A0B1A] flex items-center justify-center">
+      <div className="min-h-screen bg-[#111827] flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 mb-4">Proposal not found</p>
           <button
             onClick={() => navigate('/dashboard')}
-            className="text-[#5AB9EA] hover:text-[#4CA8D9]"
+            className="text-white hover:text-gray-300"
           >
             Back to Dashboard
           </button>
@@ -138,13 +137,7 @@ const ExperimentDetails = () => {
   ] : [];
 
   return (
-    <div className="min-h-screen bg-[#0A0B1A]">
-      {/* Background effects */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-[-100px] left-[-100px] h-[350px] w-[350px] rounded-full bg-[#5AB9EA]/10 blur-[120px]" />
-        <div className="absolute bottom-[-100px] right-[-100px] h-[350px] w-[350px] rounded-full bg-blue-600/10 blur-[120px]" />
-      </div>
-
+    <div className="min-h-screen bg-[#111827]">
       <div className="mx-auto max-w-5xl px-6 py-8 lg:px-8">
         {/* Back button */}
         <button
@@ -155,11 +148,7 @@ const ExperimentDetails = () => {
         </button>
 
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-3xl font-bold text-white">{proposal.idea_summary}</h1>
             <span className={`rounded-full px-3 py-1 text-xs font-medium ${
@@ -179,24 +168,19 @@ const ExperimentDetails = () => {
               href={experiment.pr_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-block text-[#5AB9EA] hover:text-[#4CA8D9] text-sm"
+              className="mt-2 inline-block text-white hover:text-gray-300 text-sm"
             >
               View PR on GitHub →
             </a>
           )}
-        </motion.div>
+        </div>
 
         {/* Hypothesis Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6 rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-6 backdrop-blur-sm"
-        >
+        <div className="mb-6 rounded border border-gray-800 bg-gray-900 p-6">
           <h2 className="mb-3 text-lg font-semibold text-white">Hypothesis</h2>
           <p className="text-gray-300">{proposal.rationale}</p>
           
-          <div className="mt-4 pt-4 border-t border-white/10">
+          <div className="mt-4 pt-4 border-t border-gray-800">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-400">Expected Impact</p>
@@ -212,15 +196,10 @@ const ExperimentDetails = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Planned Changes Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-6 rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-6 backdrop-blur-sm"
-        >
+        <div className="mb-6 rounded border border-gray-800 bg-gray-900 p-6">
           <h2 className="mb-3 text-lg font-semibold text-white">Planned Changes</h2>
           <p className="mb-3 text-sm text-gray-400">
             {proposal.status === 'pending' 
@@ -261,7 +240,7 @@ const ExperimentDetails = () => {
                   value={updateBlock}
                   onChange={(e) => setUpdateBlock(e.target.value)}
                   placeholder={`// Code changes in unified diff format with +/- markers\n- old code\n+ new code`}
-                  className="w-full rounded-lg bg-[#0A0B1A] p-4 font-mono text-sm text-gray-300 border border-white/10 focus:border-[#5AB9EA] focus:ring-1 focus:ring-[#5AB9EA] focus:outline-none min-h-[200px]"
+                  className="w-full rounded bg-gray-800 p-4 font-mono text-sm text-gray-300 border border-gray-700 focus:border-gray-600 focus:outline-none min-h-[200px]"
                 />
                 <p className="mt-2 text-xs text-gray-500">
                   Tip: Changes are shown in the preview above. Edit this textarea to modify the code changes, then click "Approve & Execute" when ready.
@@ -276,7 +255,7 @@ const ExperimentDetails = () => {
           )}
           
           {proposal.technical_plan && proposal.technical_plan.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-white/10">
+            <div className="mt-4 pt-4 border-t border-gray-800">
               <p className="text-sm text-gray-400 mb-2">Technical Plan:</p>
               <ul className="list-disc list-inside text-sm text-gray-300 space-y-1">
                 {proposal.technical_plan.map((plan, idx) => (
@@ -285,15 +264,10 @@ const ExperimentDetails = () => {
               </ul>
             </div>
           )}
-        </motion.div>
+        </div>
 
         {/* Experiment Controls */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mb-6 rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-6 backdrop-blur-sm"
-        >
+        <div className="mb-6 rounded border border-gray-800 bg-gray-900 p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">Experiment Controls</h2>
 
           {message.text && (
@@ -319,12 +293,10 @@ const ExperimentDetails = () => {
               )}
               
               <div className="flex gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <button
                   onClick={handleApprove}
                   disabled={processing || !updateBlock.trim()}
-                  className="flex-1 rounded-xl bg-green-500/20 px-6 py-4 font-semibold text-green-400 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 rounded bg-green-900/40 px-6 py-4 font-semibold text-green-400 border border-green-700 hover:bg-green-900/50 hover:border-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {processing ? (
                     <>
@@ -336,16 +308,14 @@ const ExperimentDetails = () => {
                       ✅ Approve & Create PR
                     </>
                   )}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                </button>
+                <button
                   onClick={handleReject}
                   disabled={processing}
-                  className="flex-1 rounded-xl bg-red-500/20 px-6 py-4 font-semibold text-red-400 border-2 border-red-500/40 hover:bg-red-500/30 hover:border-red-500/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 rounded bg-red-900/40 px-6 py-4 font-semibold text-red-400 border border-red-700 hover:bg-red-900/50 hover:border-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {processing ? 'Processing...' : '❌ Reject'}
-                </motion.button>
+                </button>
               </div>
               
               {updateBlock.trim() && (
@@ -357,21 +327,16 @@ const ExperimentDetails = () => {
           )}
 
           {proposal.status !== 'pending' && (
-            <div className="rounded-lg bg-gray-500/10 border border-gray-500/30 p-4">
+            <div className="rounded bg-gray-800 border border-gray-700 p-4">
               <p className="text-sm text-gray-400 text-center">
                 This proposal has been {proposal.status}
               </p>
             </div>
           )}
-        </motion.div>
+        </div>
 
         {/* Results Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-6 backdrop-blur-sm"
-        >
+        <div className="rounded border border-gray-800 bg-gray-900 p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">Results Summary</h2>
           
           <div className="mb-6 h-64">
@@ -381,9 +346,9 @@ const ExperimentDetails = () => {
                 <YAxis stroke="#6B7280" domain={[0, 3]} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1A1D3A',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
+                    backgroundColor: '#111827',
+                    border: '1px solid #374151',
+                    borderRadius: '4px',
                     color: '#fff',
                   }}
                 />
@@ -396,13 +361,13 @@ const ExperimentDetails = () => {
             </ResponsiveContainer>
           </div>
 
-          <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-4">
+          <div className="rounded bg-green-900/30 border border-green-700 p-4">
             <p className="text-sm text-green-400">
-              ✅ <span className="font-semibold">Statistically significant improvement detected.</span> 
+              ✅ <span className="font-semibold">Statistically significant improvement detected.</span>
               <span className="ml-2 text-gray-300">Conversion increased from 2.1% to 2.4% (p &lt; 0.05)</span>
             </p>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { repositoriesAPI, proposalsAPI, slackAPI, oauthStorage } from '../api';
@@ -268,30 +267,15 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0B1A]">
-      {/* Background effects */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-[-100px] left-[-100px] h-[350px] w-[350px] rounded-full bg-[#5AB9EA]/10 blur-[120px]" />
-        <div className="absolute bottom-[-100px] right-[-100px] h-[350px] w-[350px] rounded-full bg-blue-600/10 blur-[120px]" />
-      </div>
-
+    <div className="min-h-screen bg-[#111827]">
       <div className="mx-auto max-w-4xl px-6 py-8 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">Settings</h1>
           <p className="mt-2 text-gray-400">Configure your Northstar agent and integrations</p>
-        </motion.div>
+        </div>
 
         {/* Set Northstar Metric */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6 rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-6 backdrop-blur-sm"
-        >
+        <div className="mb-6 rounded border border-gray-800 bg-gray-900 p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">Set Northstar Metric</h2>
           <form className="space-y-4">
             <div>
@@ -303,7 +287,7 @@ const Settings = () => {
                 value={metric}
                 onChange={(e) => setMetric(e.target.value)}
                 placeholder="e.g., Checkout Conversion"
-                className="w-full rounded-xl border border-white/10 bg-[#0A0B1A] px-4 py-3 text-white placeholder-gray-500 focus:border-[#5AB9EA] focus:ring-1 focus:ring-[#5AB9EA] focus:outline-none transition"
+                className="w-full rounded border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none transition"
               />
             </div>
             <div>
@@ -315,39 +299,32 @@ const Settings = () => {
                 value={threshold}
                 onChange={(e) => setThreshold(e.target.value)}
                 placeholder="e.g., 3.0%"
-                className="w-full rounded-xl border border-white/10 bg-[#0A0B1A] px-4 py-3 text-white placeholder-gray-500 focus:border-[#5AB9EA] focus:ring-1 focus:ring-[#5AB9EA] focus:outline-none transition"
+                className="w-full rounded border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none transition"
               />
             </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               type="submit"
               onClick={(e) => {
                 e.preventDefault();
                 console.log('Metric updated:', { metric, threshold });
                 alert('Metric updated successfully!');
               }}
-              className="w-full rounded-xl bg-gradient-to-r from-[#5AB9EA] to-blue-600 px-4 py-3 font-medium text-white shadow-md hover:from-[#4CA8D9] hover:to-blue-500 transition"
+              className="w-full rounded bg-white px-4 py-3 font-medium text-black hover:bg-gray-100 transition"
             >
               Save Metric
-            </motion.button>
+            </button>
           </form>
-        </motion.div>
+        </div>
 
         {/* Connect Slack */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mb-6 rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-6 backdrop-blur-sm"
-        >
+        <div className="mb-6 rounded border border-gray-800 bg-gray-900 p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">Connect Slack</h2>
           <p className="mb-4 text-sm text-gray-400">
             Connect your Slack workspace to receive notifications about experiments and PRs
           </p>
           
           {slackConnected && (
-            <div className="mb-4 rounded-lg bg-green-500/10 border border-green-500/30 p-3">
+            <div className="mb-4 rounded bg-green-900/30 border border-green-700 p-3">
               <p className="text-sm text-green-400">
                 ✅ <span className="font-semibold">Connected to Slack</span>
               </p>
@@ -355,21 +332,17 @@ const Settings = () => {
           )}
 
           {slackConnected ? (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               onClick={handleDisconnectSlack}
-              className="w-full rounded-xl bg-red-500/20 px-4 py-3 font-medium text-red-400 border border-red-500/30 hover:bg-red-500/30 transition"
+              className="w-full rounded bg-red-900/40 px-4 py-3 font-medium text-red-400 border border-red-700 hover:bg-red-900/50 transition"
             >
               Disconnect Slack
-            </motion.button>
+            </button>
           ) : (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               onClick={handleConnectSlack}
               disabled={slackLoading}
-              className="w-full rounded-xl border border-white/10 bg-[#0A0B1A] px-4 py-3 font-medium text-white transition hover:border-[#4A154B] hover:bg-[#1A1D3A] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded border border-gray-700 bg-gray-800 px-4 py-3 font-medium text-white transition hover:border-gray-600 hover:bg-gray-750 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center justify-center gap-2">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -377,24 +350,19 @@ const Settings = () => {
                 </svg>
                 {slackLoading ? 'Connecting...' : 'Connect Slack Workspace'}
               </div>
-            </motion.button>
+            </button>
           )}
-        </motion.div>
+        </div>
 
         {/* Connect GitHub Repository */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-6 rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-6 backdrop-blur-sm"
-        >
+        <div className="mb-6 rounded border border-gray-800 bg-gray-900 p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">Connect GitHub Repository</h2>
           <p className="mb-4 text-sm text-gray-400">
             Link your repository to enable automatic PR creation and code diffs
           </p>
           
           {activeRepo && (
-            <div className="mb-4 rounded-lg bg-green-500/10 border border-green-500/30 p-3">
+            <div className="mb-4 rounded bg-green-900/30 border border-green-700 p-3">
               <p className="text-sm text-green-400">
                 ✅ Connected: <span className="font-semibold">{activeRepo.repo_fullname}</span>
               </p>
@@ -411,16 +379,16 @@ const Settings = () => {
                 value={repoFullname}
                 onChange={(e) => setRepoFullname(e.target.value)}
                 placeholder="e.g., owner/repo"
-                className="w-full rounded-xl border border-white/10 bg-[#0A0B1A] px-4 py-3 text-white placeholder-gray-500 focus:border-[#5AB9EA] focus:ring-1 focus:ring-[#5AB9EA] focus:outline-none transition"
+                className="w-full rounded border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none transition"
               />
             </div>
           </div>
 
           {message.text && (
-            <div className={`mb-4 rounded-lg p-3 ${
-              message.type === 'success' 
-                ? 'bg-green-500/10 border border-green-500/30' 
-                : 'bg-red-500/10 border border-red-500/30'
+            <div className={`mb-4 rounded p-3 ${
+              message.type === 'success'
+                ? 'bg-green-900/30 border border-green-700'
+                : 'bg-red-900/30 border border-red-700'
             }`}>
               <p className={`text-sm ${message.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
                 {message.text}
@@ -428,12 +396,10 @@ const Settings = () => {
             </div>
           )}
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={handleConnectRepo}
             disabled={loading || !repoFullname}
-            className="w-full rounded-xl border border-white/10 bg-[#0A0B1A] px-4 py-3 font-medium text-white transition hover:border-[#5AB9EA] hover:bg-[#1A1D3A] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded border border-gray-700 bg-gray-800 px-4 py-3 font-medium text-white transition hover:border-gray-600 hover:bg-gray-750 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center justify-center gap-2">
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -441,16 +407,11 @@ const Settings = () => {
               </svg>
               {loading ? 'Connecting...' : activeRepo ? 'Update Repository' : 'Connect GitHub Repository'}
             </div>
-          </motion.button>
-        </motion.div>
+          </button>
+        </div>
 
         {/* Trigger New Experiment */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-6 backdrop-blur-sm"
-        >
+        <div className="rounded border border-gray-800 bg-gray-900 p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">Trigger New Experiment</h2>
           <p className="mb-4 text-sm text-gray-400">
             Manually trigger Northstar to propose and start a new experiment
@@ -461,11 +422,11 @@ const Settings = () => {
             <button
               type="button"
               onClick={() => setShowCodebaseInput(!showCodebaseInput)}
-              className="text-sm text-[#5AB9EA] hover:text-[#4CA8D9] transition"
+              className="text-sm text-white hover:text-gray-300 transition"
             >
               {showCodebaseInput ? '▼' : '▶'} {showCodebaseInput ? 'Hide' : 'Provide'} Codebase Context (Optional)
             </button>
-            
+
             {showCodebaseInput && (
               <div className="mt-3">
                 <label className="mb-2 block text-sm font-medium text-gray-300">
@@ -476,26 +437,24 @@ const Settings = () => {
                   onChange={(e) => setCodebaseContext(e.target.value)}
                   placeholder="Paste your codebase context here (e.g., package.json content, main source files, etc.). Leave empty to fetch from GitHub automatically."
                   rows={6}
-                  className="w-full rounded-xl border border-white/10 bg-[#0A0B1A] px-4 py-3 text-white placeholder-gray-500 focus:border-[#5AB9EA] focus:ring-1 focus:ring-[#5AB9EA] focus:outline-none transition font-mono text-sm"
+                  className="w-full rounded border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none transition font-mono text-sm"
                 />
                 <p className="mt-2 text-xs text-gray-400">
-                  💡 Tip: If you provide codebase context, it will be used instead of fetching from GitHub. 
+                  Tip: If you provide codebase context, it will be used instead of fetching from GitHub.
                   Otherwise, the system will automatically fetch from GitHub (if GITHUB_TOKEN is set).
                 </p>
               </div>
             )}
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={handleTriggerExperiment}
             disabled={loading || !activeRepo}
-            className="w-full rounded-xl bg-gradient-to-r from-[#5AB9EA] to-blue-600 px-4 py-3 font-medium text-white shadow-md hover:from-[#4CA8D9] hover:to-blue-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded bg-white px-4 py-3 font-medium text-black hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Generating Proposal...' : '🚀 Trigger Experiment'}
-          </motion.button>
-        </motion.div>
+            {loading ? 'Generating Proposal...' : 'Trigger Experiment'}
+          </button>
+        </div>
       </div>
     </div>
   );

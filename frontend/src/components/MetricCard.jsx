@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
 const MetricCard = ({ title, value, change, trend, goal, running }) => {
@@ -13,23 +12,13 @@ const MetricCard = ({ title, value, change, trend, goal, running }) => {
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-6 backdrop-blur-sm"
-    >
+    <div className="rounded border border-gray-800 bg-gray-900 p-6">
       <h2 className="mb-4 text-sm font-medium text-gray-400">{title}</h2>
-      
+
       <div className="mb-4 flex items-baseline gap-2">
-        <motion.div
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: 'spring' }}
-          className="text-4xl font-bold text-white"
-        >
+        <div className="text-4xl font-bold text-white">
           {value}
-        </motion.div>
+        </div>
         <span className={`text-lg font-semibold ${change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
           {change >= 0 ? '↑' : '↓'} {Math.abs(change)}%
         </span>
@@ -40,18 +29,18 @@ const MetricCard = ({ title, value, change, trend, goal, running }) => {
           <LineChart data={mockData}>
             <XAxis dataKey="day" stroke="#6B7280" fontSize={10} />
             <YAxis stroke="#6B7280" fontSize={10} domain={[2.0, 2.5]} />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#1A1D3A', 
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#111827',
+                border: '1px solid #374151',
+                borderRadius: '4px',
                 color: '#fff'
               }}
             />
-            <Line 
-              type="monotone" 
-              dataKey="value" 
-              stroke="#5AB9EA" 
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#10B981"
               strokeWidth={2}
               dot={false}
             />
@@ -67,7 +56,7 @@ const MetricCard = ({ title, value, change, trend, goal, running }) => {
           {running} {running === 1 ? 'experiment' : 'experiments'} running
         </span>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

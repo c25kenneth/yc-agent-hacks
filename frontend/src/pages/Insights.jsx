@@ -1,5 +1,3 @@
-import { motion } from 'framer-motion';
-
 const Insights = () => {
   const insights = [
     {
@@ -47,44 +45,31 @@ const Insights = () => {
   ];
 
   const categoryColors = {
-    learned: 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30',
-    discovery: 'bg-blue-400/10 text-blue-400 border-blue-400/30',
-    correlation: 'bg-green-400/10 text-green-400 border-green-400/30',
-    optimization: 'bg-purple-400/10 text-purple-400 border-purple-400/30',
-    placement: 'bg-pink-400/10 text-pink-400 border-pink-400/30',
-    segment: 'bg-cyan-400/10 text-cyan-400 border-cyan-400/30',
+    learned: 'bg-yellow-900/30 text-yellow-400 border-yellow-700',
+    discovery: 'bg-blue-900/30 text-blue-400 border-blue-700',
+    correlation: 'bg-green-900/30 text-green-400 border-green-700',
+    optimization: 'bg-purple-900/30 text-purple-400 border-purple-700',
+    placement: 'bg-pink-900/30 text-pink-400 border-pink-700',
+    segment: 'bg-cyan-900/30 text-cyan-400 border-cyan-700',
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0B1A]">
-      {/* Background effects */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-[-100px] left-[-100px] h-[350px] w-[350px] rounded-full bg-[#5AB9EA]/10 blur-[120px]" />
-        <div className="absolute bottom-[-100px] right-[-100px] h-[350px] w-[350px] rounded-full bg-blue-600/10 blur-[120px]" />
-      </div>
-
+    <div className="min-h-screen bg-[#111827]">
       <div className="mx-auto max-w-6xl px-6 py-8 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">Insights</h1>
           <p className="mt-2 text-gray-400">What Northstar has learned over time</p>
-        </motion.div>
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {insights.map((insight, index) => (
-            <motion.div
+          {insights.map((insight) => (
+            <div
               key={insight.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-6 backdrop-blur-sm transition-all hover:border-[#5AB9EA]/50 hover:shadow-lg hover:shadow-[#5AB9EA]/10"
+              className="rounded border border-gray-800 bg-gray-900 p-6 transition-all hover:border-gray-700"
             >
               <div className="mb-3 flex items-center justify-between">
                 <span
-                  className={`rounded-full border px-2 py-1 text-xs font-medium ${categoryColors[insight.category] || categoryColors.learned}`}
+                  className={`rounded border px-2 py-1 text-xs font-medium ${categoryColors[insight.category] || categoryColors.learned}`}
                 >
                   {insight.category}
                 </span>
@@ -92,7 +77,7 @@ const Insights = () => {
               </div>
               <h3 className="mb-2 text-lg font-semibold text-white">{insight.title}</h3>
               <p className="text-sm leading-relaxed text-gray-300">{insight.message}</p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

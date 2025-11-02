@@ -1,9 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import darkWordmark from '../assets/Dark Mode Wordmark.png';
 
 const Navbar = () => {
   const location = useLocation();
-  
+
   const navItems = [
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/insights', label: 'Insights' },
@@ -11,15 +11,12 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="border-b border-white/10 bg-[#1A1D3A]/80 backdrop-blur-lg">
+    <nav className="border-b border-gray-800 bg-gray-900">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#5AB9EA] to-blue-600">
-              <span className="text-xl font-bold text-white">★</span>
-            </div>
-            <span className="text-xl font-semibold text-white">Northstar</span>
+          <Link to="/dashboard" className="flex items-center">
+            <img src={darkWordmark} alt="Northstar" className="h-6" />
           </Link>
 
           {/* Navigation Tabs */}
@@ -30,19 +27,13 @@ const Navbar = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className="relative rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:text-white"
+                  className={`rounded px-4 py-2 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                  }`}
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute inset-0 rounded-lg bg-[#5AB9EA]/20"
-                      initial={false}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  )}
-                  <span className={`relative z-10 ${isActive ? 'text-white' : 'text-gray-300'}`}>
-                    {item.label}
-                  </span>
+                  {item.label}
                 </Link>
               );
             })}

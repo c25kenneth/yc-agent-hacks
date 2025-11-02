@@ -18,14 +18,8 @@ function App() {
         <Route path="/login" element={<Login/>} />
         <Route path="/signup" element={<Signup/>} />
         
-        {/* Protected routes with layout */}
-        <Route path="/" element={
-          <ProtectedRoute>
-            <Layout>
-              <Dashboard />
-            </Layout>
-          </ProtectedRoute>
-        }/>
+        {/* Landing page without layout */}
+        <Route path="/" element={<Landing />} />
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Layout>

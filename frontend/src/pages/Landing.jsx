@@ -46,16 +46,9 @@ export default function Landing() {
           href="https://tally.so/r/worWMX"
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-white text-black px-14 py-5 text-xl font-medium rounded-full hover:bg-gray-100 transition-all inline-block text-center"
+          className="rounded bg-white px-12 py-4 text-lg font-medium text-black hover:bg-gray-100 transition inline-block text-center"
           style={{
-            boxShadow: 'none',
             textDecoration: 'none'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 20px rgba(255,255,255,0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = 'none';
           }}
         >
           Join Early Access →

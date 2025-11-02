@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MetricCard from '../components/MetricCard';
@@ -165,23 +164,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0B1A]">
-      {/* Background effects */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-[-100px] left-[-100px] h-[350px] w-[350px] rounded-full bg-[#5AB9EA]/10 blur-[120px]" />
-        <div className="absolute bottom-[-100px] right-[-100px] h-[350px] w-[350px] rounded-full bg-blue-600/10 blur-[120px]" />
-      </div>
-
+    <div className="min-h-screen bg-[#111827]">
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="mt-2 text-gray-400">Monitor your north star metric and active experiments</p>
-        </motion.div>
-
         {/* Hero Metric Panel */}
         <div className="mb-8">
           <MetricCard
@@ -195,19 +179,15 @@ const Dashboard = () => {
 
         {/* Repository Filter */}
         {repositories.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 rounded-2xl border border-white/10 bg-[#1A1D3A]/60 p-4 backdrop-blur-sm"
-          >
+          <div className="mb-6 rounded border border-gray-800 bg-gray-900 p-4">
             <label className="mb-2 block text-sm font-medium text-gray-300">Filter by Repository</label>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedRepo(null)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                className={`px-4 py-2 rounded text-sm font-medium transition ${
                   selectedRepo === null
-                    ? 'bg-[#5AB9EA] text-white'
-                    : 'bg-[#0A0B1A] text-gray-300 border border-white/10 hover:border-[#5AB9EA]'
+                    ? 'bg-white text-black hover:bg-gray-100'
+                    : 'bg-gray-800 text-gray-300 border border-gray-700 hover:border-gray-600'
                 }`}
               >
                 All Repositories
@@ -216,31 +196,26 @@ const Dashboard = () => {
                 <button
                   key={repo.id}
                   onClick={() => setSelectedRepo(repo.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  className={`px-4 py-2 rounded text-sm font-medium transition ${
                     selectedRepo === repo.id
-                      ? 'bg-[#5AB9EA] text-white'
-                      : 'bg-[#0A0B1A] text-gray-300 border border-white/10 hover:border-[#5AB9EA]'
+                      ? 'bg-white text-black hover:bg-gray-100'
+                      : 'bg-gray-800 text-gray-300 border border-gray-700 hover:border-gray-600'
                   }`}
                 >
                   {repo.repo_fullname}
                 </button>
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Recent Experiments Feed */}
           <div className="lg:col-span-2">
-            <motion.h2
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mb-4 text-xl font-semibold text-white"
-            >
+            <h2 className="mb-4 text-xl font-semibold text-white">
               {selectedRepo ? `Experiments - ${repositories.find(r => r.id === selectedRepo)?.repo_fullname || 'Unknown'}` : 'Recent Experiments'}
-            </motion.h2>
+            </h2>
             {loading ? (
               <div className="text-center text-gray-400 py-8">Loading...</div>
             ) : experiments.length === 0 ? (
@@ -257,21 +232,14 @@ const Dashboard = () => {
                     if (group.proposals.length === 0 && group.experiments.length === 0) return null;
                     return (
                       <div key={repoId} className="mb-6">
-                        <motion.h3
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="mb-3 text-lg font-semibold text-white flex items-center gap-2"
-                        >
-                          <span className="text-[#5AB9EA]">📁</span>
+                        <h3 className="mb-3 text-lg font-semibold text-white flex items-center gap-2">
+                          <span className="text-gray-400">📁</span>
                           {group.repo.repo_fullname || 'Unassigned'}
-                        </motion.h3>
+                        </h3>
                         <div className="grid gap-4 md:grid-cols-2">
                           {[...group.proposals, ...group.experiments].map((experiment, index) => (
-                            <motion.div
+                            <div
                               key={experiment.id || index}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.05 * index }}
                               onClick={() => {
                                 if (experiment.proposal_id) {
                                   navigate(`/experiments/${experiment.proposal_id}`);
@@ -280,7 +248,7 @@ const Dashboard = () => {
                               className="cursor-pointer"
                             >
                               <ExperimentCard {...experiment} />
-                            </motion.div>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -289,11 +257,8 @@ const Dashboard = () => {
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
                     {experiments.map((experiment, index) => (
-                      <motion.div
+                      <div
                         key={experiment.id || index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 * index }}
                         onClick={() => {
                           if (experiment.proposal_id) {
                             navigate(`/experiments/${experiment.proposal_id}`);
@@ -302,7 +267,7 @@ const Dashboard = () => {
                         className="cursor-pointer"
                       >
                         <ExperimentCard {...experiment} />
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 )}
