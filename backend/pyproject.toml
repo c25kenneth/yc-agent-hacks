@@ -1,16 +1,30 @@
 [project]
-name = "backend"
+name = "northstar-backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "Northstar AI Agent - Autonomous experimentation platform"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    # FastAPI & Web Framework
     "fastapi>=0.120.4",
-    "google-genai>=1.47.0",
-    "langchain>=1.0.3",
-    "langchain-openai>=1.0.1",
+    "uvicorn>=0.34.0",
+
+    # Metorial & AI
     "metorial>=1.0.11",
     "metorial-google>=1.0.4",
     "openai>=2.6.1",
+    "google-genai>=1.47.0",
+    "langchain>=1.0.3",
+    "langchain-openai>=1.0.1",
+
+    # MCP Server
+    "mcp>=1.2.0",
+
+    # Git & GitHub
+    "GitPython>=3.1.40",
+    "PyGithub>=2.1.1",
+
+    # Utilities
     "python-dotenv>=1.2.1",
+    "requests>=2.31.0",
 ]
