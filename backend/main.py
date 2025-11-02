@@ -1318,10 +1318,12 @@ async def execute_experiment(req: ExecuteExperimentRequest):
                 if slack_deployment_id and req.oauth_session_id:
                     try:
                         if pr_url:
-                            slack_message = f"✅ Experiment executed successfully!\n"
+                            slack_message = f"✅ Experiment executed successfully!\n\n"
                             slack_message += f"ID: {req.proposal_id}\n"
-                            slack_message += f"Description: {req.instruction}\n"
-                            slack_message += f"PR: {pr_url}"
+                            slack_message += f"Description: {req.instruction}\n\n"
+                            slack_message += f"Pull Request URL:\n{pr_url}\n\n"
+                            slack_message += f"🔗 {pr_url}\n\n"
+                            slack_message += f"PR Link: {pr_url}"
                             logger.info(f"Constructing Slack message with PR URL: {pr_url}")
                         else:
                             slack_message = f"Experiment completed - PR creation failed\n"
@@ -1546,10 +1548,12 @@ Metorial response: {result.text[:500]}"""
         else:
             try:
                 if pr_url:
-                    slack_message = f"✅ Experiment executed successfully!\n"
+                    slack_message = f"✅ Experiment executed successfully!\n\n"
                     slack_message += f"ID: {req.proposal_id}\n"
-                    slack_message += f"Description: {req.instruction}\n"
-                    slack_message += f"PR: {pr_url}"
+                    slack_message += f"Description: {req.instruction}\n\n"
+                    slack_message += f"Pull Request URL:\n{pr_url}\n\n"
+                    slack_message += f"🔗 {pr_url}\n\n"
+                    slack_message += f"PR Link: {pr_url}"
                     logger.info(f"Constructing Slack message with PR URL: {pr_url}")
                 else:
                     slack_message = f"Experiment completed - PR creation failed\n"
@@ -1636,11 +1640,20 @@ async def send_slack_message(req: SlackMessageRequest):
         logger.info(f"OAuth session ID: {req.oauth_session_id[:20]}...")
         logger.info(f"Message preview: {req.message[:100]}...")
         
+        # Embed the message in triple quotes to preserve everything exactly
+        message_payload = req.message
         result = await metorial.run(
             client=openai_client,
-            message=f"""Post this message to Slack: "{req.message}"
+            message=f"""You must post this EXACT message to Slack using the chat.postMessage tool. Do NOT modify ANY text, URLs, line breaks, or formatting:
 
-Use the available Slack tools to post to any public channel.""",
+```{message_payload}```
+
+CRITICAL RULES:
+1. Copy the message EXACTLY as shown above between the triple backticks
+2. Do NOT remove URLs - they must be included
+3. Do NOT reformat or change line breaks
+4. Do NOT remove any text
+5. Post it EXACTLY as provided using chat.postMessage to any public channel""",
             model="gpt-4o",
             server_deployments=[{
                 "serverDeploymentId": slack_deployment_id,
