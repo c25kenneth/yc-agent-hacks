@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./frontend/src/assets/DarkModeWordmark.png"alt="Northstar Wordmark">
+  <img src="./frontend/src/assets/Header.png"alt="Northstar Wordmark">
 </p>
 
 # Northstar
@@ -108,7 +108,7 @@ The triage system was the key architectural choice. Loading all MCP servers upfr
 
 ## What's next
 
-- Making integration take 10 minutes -> < 1 minute
+- Making integration take 10 minutes --> < 1 minute
 - Getting 3–5 pilot teams — [Talk to us if you're interested](https://tally.so/r/worWMX)
 - Iterating based on customer feedback
 - Applying to YC W26
