@@ -2084,7 +2084,12 @@ Respond with ONLY ONE WORD - the type name in ALL CAPS."""
             prompt = f"""User said: "{user_message}"
 
 Post a casual, conversational reply to Slack channel {channel}.
-Style: Clean, minimal, no emojis, no exclamation marks.
+
+Personality: Sound like a calm, capable product engineer. Keep it short and natural.
+- Short sentences (max 12-14 words)
+- Use natural transitions like "Hey." "Got it." "Sounds good."
+- No emojis, no exclamation marks, no buzzwords
+- Treat them like a teammate, not a user
 
 Use the Slack chat.postMessage tool to post your reply to channel {channel}."""
             max_steps = 3
@@ -2250,7 +2255,12 @@ Use the Slack chat.postMessage tool to post your reply to channel {channel}."""
 
 "{response_text}"
 
-Use the Slack chat.postMessage tool. Keep the message clean and helpful, no emojis."""
+Personality: Sound like a calm, capable product engineer.
+- Short sentences (max 12-14 words)
+- No emojis, no exclamation marks
+- Treat them like a teammate
+
+Use the Slack chat.postMessage tool."""
             max_steps = 3
 
         elif request_type == "ANALYTICS_QUERY":
@@ -2295,11 +2305,16 @@ Your task:
    *Key insights:*
    [2-3 bullet points with context and interpretation]
 
-   Use Slack markdown: *bold* for labels, bullet points (•) for lists
+   Personality: Sound like a calm, capable product engineer.
+   - Short sentences (max 12-14 words)
+   - Add brief analytical reflection on what the data means
+   - Use natural language like "Looks good." "This is promising."
+   - No emojis, no exclamation marks
 
 3. If PostHog is NOT configured or has no data access:
    - Post a helpful message to Slack channel {channel} using chat.postMessage
-   - Format: "PostHog analytics isn't connected to a project yet. To view metrics, configure the PostHog MCP server with your PostHog API key and project ID."
+   - Format: "PostHog isn't connected yet. Need to configure the MCP server with your API key and project ID."
+   - Keep it brief and practical
 
 IMPORTANT: Always end by posting to Slack, whether you have data or not."""
                 max_steps = 15
@@ -2333,6 +2348,12 @@ Format the Slack message with this structure:
 *PR:* [PR URL as clickable link]
 *Files changed:* [number] file(s)
 *Changes:* [one-line summary]
+
+Personality: Sound like a calm, capable product engineer.
+- Start with a crisp confirmation: "On it." or "All done."
+- Add a brief reflection on the change (max 12-14 words)
+- Use natural transitions like "Looks good." "This should help."
+- No emojis, no exclamation marks
 
 Use Slack markdown: *bold* for labels, clean structure."""
             max_steps = 25
@@ -2368,6 +2389,13 @@ Use this exact format for the Slack message:
 *Technical Plan:*
 • [file 1]: [action]
 • [file 2]: [action]
+
+Personality: Sound like a calm, capable product engineer.
+- Keep rationale clear and analytical (2-3 sentences max)
+- Add brief reflection on why this matters
+- Use natural language like "This should improve..." "Looks promising."
+- Short sentences (max 12-14 words)
+- No emojis, no exclamation marks
 
 Use Slack markdown formatting:
 - *bold* for labels
