@@ -103,7 +103,7 @@ async def respond_to_slack_message(channel: str, message: str, user_id: str):
 
             User message: "{message}"
 
-            Respond with a clean, minimal tone:
+            Craft a response with a clean, minimal tone:
             - NO emojis ever
             - NO exclamation marks
             - Keep it concise (1-2 sentences max)
@@ -121,7 +121,7 @@ async def respond_to_slack_message(channel: str, message: str, user_id: str):
             - "Hey there! :blush: Just let me know how I can assist you today!"
             - "All systems are up and running smoothly on my end!"
 
-            Post your response to Slack channel {channel}.
+            IMPORTANT: Post ONLY ONE message to Slack channel {channel}. Do not post multiple messages or revisions.
             """,
             model="gpt-4o",
             server_deployments=[
@@ -130,7 +130,7 @@ async def respond_to_slack_message(channel: str, message: str, user_id: str):
                     "oauthSessionId": oauth_session_id
                 }
             ],
-            max_steps=3
+            max_steps=1
         )
 
         logger.info(f"Responded to Northstar mention in channel {channel}")
