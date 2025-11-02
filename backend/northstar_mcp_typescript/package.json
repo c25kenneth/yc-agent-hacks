@@ -1,0 +1,24 @@
+{
+  "name": "northstar-mcp-typescript",
+  "version": "0.1.0",
+  "description": "Northstar MCP Server - TypeScript/Deno implementation",
+  "type": "module",
+  "main": "server.ts",
+  "scripts": {
+    "start": "deno run --allow-env --allow-net --allow-read --allow-write --allow-run --allow-sys server.ts",
+    "dev": "deno run --allow-env --allow-net --allow-read --allow-write --allow-run --allow-sys server.ts"
+  },
+  "keywords": [
+    "mcp",
+    "metorial",
+    "northstar",
+    "typescript",
+    "deno"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@metorial/mcp-server-sdk": "^1.0.0"
+  }
+}
+
