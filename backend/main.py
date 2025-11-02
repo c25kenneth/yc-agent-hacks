@@ -1,6 +1,6 @@
 """Northstar FastAPI Orchestrator - AI-powered experimentation platform."""
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from metorial import Metorial
@@ -24,6 +24,8 @@ from repo_indexer import (
 )
 
 import db_operations
+from pr_creator import PRCreator
+from slack_webhook import handle_slack_event, handle_slash_command
 
 load_dotenv()
 
@@ -896,7 +898,7 @@ User-provided codebase context:
             logger.info("No OAuth session ID provided, skipping Slack notification for new proposal")
         else:
             try:
-                slack_message = f"🚀 New experiment proposal: {proposal_json.get('idea_summary', 'Unknown')}\n"
+                slack_message = f"New proposal: {proposal_json.get('idea_summary', 'Unknown')}\n"
                 slack_message += f"ID: {actual_proposal_id}\n"
                 slack_message += f"Repository: {repo_fullname}\n"
                 slack_message += f"Category: {proposal_json.get('category', 'general')}\n"
@@ -956,12 +958,9 @@ async def execute_experiment(req: ExecuteExperimentRequest):
         
         base_branch = req.base_branch or "main"
 
-        # Validate that Northstar MCP is deployed (required for PR creation)
-        if not northstar_mcp_deployment_id:
-            raise HTTPException(
-                status_code=500,
-                detail="NORTHSTAR_MCP_DEPLOYMENT_ID not set. The execute_code_change tool is required to create PRs. Please deploy the Northstar MCP server and set the deployment ID in your environment variables."
-            )
+        # Use MCP approach for PR creation via Northstar MCP server
+        # Note: Currently using direct PR creation as fallback since MCP tools aren't being exposed
+        use_direct_pr_creation = True
 
         # Determine which deployments to use
         deployments = [
@@ -985,8 +984,84 @@ async def execute_experiment(req: ExecuteExperimentRequest):
             oauth_session_id=req.oauth_session_id
         )
 
-        # Let Metorial orchestrate the entire flow
-        # Explicitly pass repo and file_path to the execute_code_change tool
+        # Fallback: Direct PR creation (if MCP is unavailable)
+        if use_direct_pr_creation:
+            import logging
+            logger = logging.getLogger(__name__)
+
+            logger.info(f"Using direct PR creation for experiment {req.proposal_id}")
+
+            try:
+                # Create PR directly
+                pr_creator = PRCreator()
+                pr_result = pr_creator.create_pr(
+                    repo_fullname=req.repo_fullname,
+                    instruction=req.instruction,
+                    update_block=req.update_block,
+                    file_path=req.file_path,
+                    base_branch=base_branch
+                )
+
+                if pr_result["status"] == "error":
+                    raise Exception(pr_result.get("error", "PR creation failed"))
+
+                pr_url = pr_result["pr_url"]
+                branch = pr_result["branch_name"]
+
+                logger.info(f"PR created: {pr_url}")
+
+                # Update experiment with PR URL
+                db_operations.update_experiment(
+                    experiment_id=experiment.get("id"),
+                    pr_url=pr_url,
+                    status="running"
+                )
+
+                # Send Slack notification
+                if slack_deployment_id and req.oauth_session_id:
+                    try:
+                        slack_message = f"Experiment executed\n"
+                        slack_message += f"ID: {req.proposal_id}\n"
+                        slack_message += f"Description: {req.instruction}\n"
+                        slack_message += f"PR: {pr_url}"
+
+                        await send_slack_message(slack_message, req.oauth_session_id)
+                        logger.info(f"Slack notification sent for {req.proposal_id}")
+                    except Exception as slack_error:
+                        logger.warning(f"Slack notification failed: {str(slack_error)}")
+
+                # Create activity log
+                db_operations.create_activity_log(
+                    message=f"Executed experiment {req.proposal_id}: {req.instruction[:50]}... PR: {pr_url}",
+                    proposal_id=req.proposal_id,
+                    experiment_id=experiment.get("id"),
+                    log_type="success"
+                )
+
+                return {
+                    "status": "success",
+                    "result": f"PR created at {pr_url}",
+                    "proposal_id": req.proposal_id,
+                    "experiment_id": experiment.get("id"),
+                    "pr_url": pr_url,
+                    "branch": branch
+                }
+
+            except Exception as direct_pr_error:
+                logger.error(f"Direct PR creation failed: {str(direct_pr_error)}")
+
+                db_operations.update_experiment(
+                    experiment_id=experiment.get("id"),
+                    status="failed"
+                )
+
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"PR creation failed: {str(direct_pr_error)}"
+                )
+
+        # Use Metorial with Northstar MCP to orchestrate PR creation
+        # Pass repo and file_path to the execute_code_change tool
         import logging
         logger = logging.getLogger(__name__)
         
@@ -1136,11 +1211,16 @@ Metorial response: {result.text[:500]}"""
             logger.info(f"No OAuth session ID in request for proposal {req.proposal_id}, skipping Slack notification")
         else:
             try:
-                slack_message = f"✅ Experiment executed successfully!\n"
-                slack_message += f"ID: {req.proposal_id}\n"
-                slack_message += f"Description: {req.instruction}\n"
-                slack_message += f"PR: {pr_url}"
-                
+                if pr_url:
+                    slack_message = f"✅ Experiment executed successfully!\n"
+                    slack_message += f"ID: {req.proposal_id}\n"
+                    slack_message += f"Description: {req.instruction}\n"
+                    slack_message += f"PR: {pr_url}"
+                else:
+                    slack_message = f"Experiment completed - PR creation failed\n"
+                    slack_message += f"ID: {req.proposal_id}\n"
+                    slack_message += f"Description: {req.instruction}"
+
                 # Call send_slack_message with proper request object
                 slack_req = SlackMessageRequest(message=slack_message, oauth_session_id=req.oauth_session_id)
                 await send_slack_message(slack_req)
@@ -1571,7 +1651,7 @@ async def approve_proposal(
             logger.info(f"No OAuth session ID in proposal {proposal_id}, skipping Slack notification for approval")
         else:
             try:
-                slack_message = f"✅ Experiment approved and being executed!\n"
+                slack_message = f"Experiment approved and executing\n"
                 slack_message += f"Proposal ID: {proposal_id}\n"
                 slack_message += f"Description: {proposal.get('idea_summary', 'Unknown')}"
                 
@@ -1640,18 +1720,23 @@ async def reject_proposal(proposal_id: str):
     """
     try:
         proposal = db_operations.update_proposal_status(proposal_id, "rejected")
-        
+
         # Create activity log
         db_operations.create_activity_log(
             message=f"Rejected proposal {proposal_id}",
             proposal_id=proposal_id,
             log_type="info"
         )
-        
+
         return {
             "status": "success",
             "proposal": proposal
         }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1906,6 +1991,34 @@ async def knowledge_status(repo: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/slack/events")
+async def slack_events(request: Request):
+    """
+    Slack Events API webhook.
+
+    Receives events when:
+    - Messages mention "northstar"
+    - Direct messages to the bot
+    - App mentions (@northstar)
+
+    The bot responds conversationally using GPT-4o.
+    """
+    return await handle_slack_event(request)
+
+
+@app.post("/slack/commands")
+async def slack_commands(request: Request):
+    """
+    Slack slash commands webhook.
+
+    Handles commands like:
+    - /northstar help
+    - /northstar propose experiment
+    - /northstar status
+    """
+    return await handle_slash_command(request)
 
 
 if __name__ == "__main__":

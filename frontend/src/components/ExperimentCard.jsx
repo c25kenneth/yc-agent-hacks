@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom';
 
 const ExperimentCard = ({ id, title, status, result, description }) => {
   const statusConfig = {
-    completed: { icon: '✅', color: 'text-green-400', bg: 'bg-green-900/30' },
-    running: { icon: '⏳', color: 'text-blue-400', bg: 'bg-blue-900/30' },
-    rejected: { icon: '❌', color: 'text-red-400', bg: 'bg-red-900/30' },
+    completed: { color: 'text-green-400', bg: 'bg-green-900/30' },
+    running: { color: 'text-blue-400', bg: 'bg-blue-900/30' },
+    rejected: { color: 'text-red-400', bg: 'bg-red-900/30' },
+    approved: { color: 'text-yellow-400', bg: 'bg-yellow-900/30' },
   };
 
   const config = statusConfig[status] || statusConfig.running;
@@ -13,8 +14,7 @@ const ExperimentCard = ({ id, title, status, result, description }) => {
     <div className="rounded border border-gray-800 bg-gray-900 p-6 transition-all hover:border-gray-700">
       <div className="mb-4 flex items-start justify-between">
         <div className="flex-1">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-xl">{config.icon}</span>
+          <div className="mb-2">
             <span className={`rounded px-2 py-1 text-xs font-medium ${config.color} ${config.bg}`}>
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>

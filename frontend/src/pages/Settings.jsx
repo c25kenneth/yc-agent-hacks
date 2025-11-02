@@ -269,11 +269,6 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-[#111827]">
       <div className="mx-auto max-w-4xl px-6 py-8 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Settings</h1>
-          <p className="mt-2 text-gray-400">Configure your Northstar agent and integrations</p>
-        </div>
-
         {/* Set Northstar Metric */}
         <div className="mb-6 rounded border border-gray-800 bg-gray-900 p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">Set Northstar Metric</h2>
@@ -287,18 +282,6 @@ const Settings = () => {
                 value={metric}
                 onChange={(e) => setMetric(e.target.value)}
                 placeholder="e.g., Checkout Conversion"
-                className="w-full rounded border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none transition"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-300">
-                Target Threshold
-              </label>
-              <input
-                type="text"
-                value={threshold}
-                onChange={(e) => setThreshold(e.target.value)}
-                placeholder="e.g., 3.0%"
                 className="w-full rounded border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-gray-600 focus:outline-none transition"
               />
             </div>
@@ -345,8 +328,13 @@ const Settings = () => {
               className="w-full rounded border border-gray-700 bg-gray-800 px-4 py-3 font-medium text-white transition hover:border-gray-600 hover:bg-gray-750 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center justify-center gap-2">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 5.042a2.528 2.528 0 0 1-2.52-2.52A2.528 2.528 0 0 1 18.956 0a2.528 2.528 0 0 1 2.523 2.522v2.52h-2.523zM18.956 6.313a2.528 2.528 0 0 1 2.523 2.521 2.528 2.528 0 0 1-2.523 2.521h-6.313A2.528 2.528 0 0 1 10.521 8.834a2.528 2.528 0 0 1 2.522-2.521h6.313zM15.165 18.956a2.528 2.528 0 0 1 2.522 2.523A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.52h2.52zM13.895 18.956a2.527 2.527 0 0 1-2.521 2.522 2.527 2.527 0 0 1-2.521-2.522v-6.313a2.528 2.528 0 0 1 2.521-2.521 2.528 2.528 0 0 1 2.521 2.521v6.313zM24 8.834a2.528 2.528 0 0 1-2.522 2.521 2.528 2.528 0 0 1-2.522-2.521V2.522A2.528 2.528 0 0 1 21.478 0 2.528 2.528 0 0 1 24 2.522v6.312z" />
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 54 54">
+                  <g>
+                    <path d="M19.712.133a5.381 5.381 0 0 0-5.376 5.387 5.381 5.381 0 0 0 5.376 5.386h5.376V5.52A5.381 5.381 0 0 0 19.712.133m0 14.365H5.376A5.381 5.381 0 0 0 0 19.884a5.381 5.381 0 0 0 5.376 5.387h14.336a5.381 5.381 0 0 0 5.376-5.387 5.381 5.381 0 0 0-5.376-5.386"/>
+                    <path d="M53.76 19.884a5.381 5.381 0 0 0-5.376-5.386 5.381 5.381 0 0 0-5.376 5.386v5.387h5.376a5.381 5.381 0 0 0 5.376-5.387m-14.336 0V5.52A5.381 5.381 0 0 0 34.048.133a5.381 5.381 0 0 0-5.376 5.387v14.364a5.381 5.381 0 0 0 5.376 5.387 5.381 5.381 0 0 0 5.376-5.387"/>
+                    <path d="M34.048 54a5.381 5.381 0 0 0 5.376-5.387 5.381 5.381 0 0 0-5.376-5.386h-5.376v5.386A5.381 5.381 0 0 0 34.048 54m0-14.365h14.336a5.381 5.381 0 0 0 5.376-5.386 5.381 5.381 0 0 0-5.376-5.387H34.048a5.381 5.381 0 0 0-5.376 5.387 5.381 5.381 0 0 0 5.376 5.386"/>
+                    <path d="M0 34.249a5.381 5.381 0 0 0 5.376 5.386 5.381 5.381 0 0 0 5.376-5.386v-5.387H5.376A5.381 5.381 0 0 0 0 34.25m14.336 0v14.364a5.381 5.381 0 0 0 5.376 5.387 5.381 5.381 0 0 0 5.376-5.387V34.25a5.381 5.381 0 0 0-5.376-5.387 5.381 5.381 0 0 0-5.376 5.387"/>
+                  </g>
                 </svg>
                 {slackLoading ? 'Connecting...' : 'Connect Slack Workspace'}
               </div>
