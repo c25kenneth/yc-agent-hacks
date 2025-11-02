@@ -61,6 +61,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 slack_deployment_id = os.getenv("SLACK_DEPLOYMENT_ID")
 github_deployment_id = os.getenv("GITHUB_DEPLOYMENT_ID", "srv_0mg8iy70b29Y2sPqULfav8")
 northstar_mcp_deployment_id = os.getenv("NORTHSTAR_DEPLOYMENT_ID")  # Updated to match .env
+posthog_deployment_id = os.getenv("POSTHOG_DEPLOYMENT_ID")  # PostHog analytics MCP
 slack_oauth_session_id = os.getenv("SLACK_OAUTH_SESSION_ID")  # Global Slack OAuth session
 
 # Initialize Captain client (optional - will be None if not configured)
@@ -2060,8 +2061,9 @@ Classify the request as ONE of these types and respond with ONLY the type name:
 
 1. "CASUAL_CHAT" - Greetings, small talk, "hey", "what's up", "how are you", general questions not about code
 2. "REPO_ANALYSIS" - Questions about the repo: "what does this repo do", "tell me about the code", "how does X work"
-3. "CODE_CHANGE" - Requests to modify code: "make a pr", "change X to Y", "add feature Z", "update the button color"
-4. "EXPERIMENT_PROPOSAL" - "propose an experiment", "suggest improvements"
+3. "ANALYTICS_QUERY" - Questions about analytics, metrics, DAUs, MAUs, events, retention, user behavior: "how are our DAUs", "show me user retention", "what's our conversion rate", "how many signups", "most popular features"
+4. "CODE_CHANGE" - Requests to modify code: "make a pr", "change X to Y", "add feature Z", "update the button color"
+5. "EXPERIMENT_PROPOSAL" - "propose an experiment", "suggest improvements"
 
 Respond with ONLY ONE WORD - the type name in ALL CAPS."""
             }],
@@ -2250,6 +2252,48 @@ Use the Slack chat.postMessage tool to post your reply to channel {channel}."""
 
 Use the Slack chat.postMessage tool. Keep the message clean and helpful, no emojis."""
             max_steps = 3
+
+        elif request_type == "ANALYTICS_QUERY":
+            # Analytics query - needs PostHog + Slack
+            logger.info("📊 Handling as analytics query (PostHog + Slack)")
+
+            if not posthog_deployment_id:
+                logger.warning("PostHog deployment ID not configured")
+                response_text = "Analytics integration is not configured yet. Please set up PostHog to view metrics."
+                deployments = [
+                    {"serverDeploymentId": slack_deployment_id, "oauthSessionId": slack_oauth_session_id}
+                ]
+                prompt = f"""Post this message to Slack channel {channel}:
+
+"{response_text}"
+
+Use the Slack chat.postMessage tool."""
+                max_steps = 3
+            else:
+                # Use PostHog MCP to query analytics
+                deployments = [
+                    {"serverDeploymentId": posthog_deployment_id},
+                    {"serverDeploymentId": slack_deployment_id, "oauthSessionId": slack_oauth_session_id}
+                ]
+                prompt = f"""User is asking about analytics: "{user_message}"
+
+Your task:
+1. First, check if PostHog is properly configured by listing available tools or querying for project info.
+
+2. If PostHog has access to data:
+   - Query the relevant metrics (DAUs/MAUs, retention, events, conversions, feature usage)
+   - Interpret results in a product-focused way with trends and insights
+   - Post a clear summary to Slack channel {channel} using chat.postMessage
+   - Format: 2-4 sentences, specific numbers with context, no emojis
+   - Example: "DAUs are at 1,234 users, up 12% from last week. Growth is driven by the new onboarding flow."
+
+3. If PostHog is NOT configured or has no data access:
+   - Post a helpful message to Slack channel {channel} using chat.postMessage
+   - Explain that PostHog needs to be connected to a project with API credentials
+   - Keep it brief and professional: "PostHog analytics isn't connected to a project yet. To view metrics, configure the PostHog MCP server with your PostHog API key and project ID."
+
+IMPORTANT: Always end by posting to Slack, whether you have data or not."""
+                max_steps = 15
 
         elif request_type == "CODE_CHANGE":
             # Needs all tools: GitHub + Northstar + Slack
