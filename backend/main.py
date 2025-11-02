@@ -25,9 +25,20 @@ from repo_indexer import (
 
 import db_operations
 from pr_creator import PRCreator
-from slack_webhook import handle_slack_event, handle_slash_command
+import logging
 
 load_dotenv()
+
+# Configure logging to show INFO level messages
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()  # Output to console
+    ]
+)
+logger = logging.getLogger(__name__)
+logger.info("🚀 Northstar backend starting up...")
 
 app = FastAPI(
     title="Northstar API",
@@ -49,7 +60,8 @@ metorial = Metorial(api_key=os.getenv("METORIAL_API_KEY"))
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 slack_deployment_id = os.getenv("SLACK_DEPLOYMENT_ID")
 github_deployment_id = os.getenv("GITHUB_DEPLOYMENT_ID", "srv_0mg8iy70b29Y2sPqULfav8")
-northstar_mcp_deployment_id = os.getenv("NORTHSTAR_MCP_DEPLOYMENT_ID")  # Will set after deploying
+northstar_mcp_deployment_id = os.getenv("NORTHSTAR_DEPLOYMENT_ID")  # Updated to match .env
+slack_oauth_session_id = os.getenv("SLACK_OAUTH_SESSION_ID")  # Global Slack OAuth session
 
 # Initialize Captain client (optional - will be None if not configured)
 try:
@@ -1993,6 +2005,380 @@ async def knowledge_status(repo: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+async def run_autonomous_agent(
+    user_message: str,
+    channel: str,
+    user_id: str,
+    context: Optional[Dict[str, Any]] = None
+) -> str:
+    """
+    Unified autonomous agent that reasons and acts.
+
+    This is the core agent function that:
+    1. Receives user input (from Slack or other interfaces)
+    2. Uses Metorial to orchestrate GPT-4o with all MCP tools
+    3. Lets GPT-4o reason autonomously about what to do
+    4. Executes tools as needed (code changes, GitHub ops, Slack replies)
+    5. Returns results
+
+    Args:
+        user_message: The user's request/message
+        channel: Slack channel ID (for posting responses)
+        user_id: Slack user ID
+        context: Optional context (repo info, etc.)
+
+    Returns:
+        Agent's response text
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Get active repository context
+        active_repo = db_operations.get_active_repository()
+        repo_fullname = active_repo.get("repo_fullname") if active_repo else "No repository connected"
+        base_branch = active_repo.get("base_branch", "main") if active_repo else "main"
+
+        logger.info(f"Running autonomous agent for user {user_id} in channel {channel}")
+        logger.info(f"User message: {user_message}")
+        logger.info(f"Active repo: {repo_fullname}")
+
+        # STAGE 1: Quick triage - determine what tools are needed
+        logger.info("🧠 Stage 1: Analyzing request to determine required tools...")
+
+        # Use OpenAI directly for triage (faster, no deployments needed)
+        triage_response = await openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{
+                "role": "user",
+                "content": f"""Analyze this user request and determine what tools/actions are needed.
+
+User request: "{user_message}"
+Active repository: {repo_fullname}
+
+Classify the request as ONE of these types and respond with ONLY the type name:
+
+1. "CASUAL_CHAT" - Greetings, small talk, "hey", "what's up", "how are you", general questions not about code
+2. "REPO_ANALYSIS" - Questions about the repo: "what does this repo do", "tell me about the code", "how does X work"
+3. "CODE_CHANGE" - Requests to modify code: "make a pr", "change X to Y", "add feature Z", "update the button color"
+4. "EXPERIMENT_PROPOSAL" - "propose an experiment", "suggest improvements"
+
+Respond with ONLY ONE WORD - the type name in ALL CAPS."""
+            }],
+            max_tokens=10
+        )
+
+        request_type = triage_response.choices[0].message.content.strip().upper()
+        logger.info(f"📊 Request classified as: {request_type}")
+
+        # STAGE 2: Execute with appropriate deployments
+        if request_type == "CASUAL_CHAT":
+            # Simple chat - only needs Slack
+            logger.info("💬 Handling as casual chat (Slack only)")
+            deployments = [{
+                "serverDeploymentId": slack_deployment_id,
+                "oauthSessionId": slack_oauth_session_id
+            }]
+            prompt = f"""User said: "{user_message}"
+
+Post a casual, conversational reply to Slack channel {channel}.
+Style: Clean, minimal, no emojis, no exclamation marks.
+
+Use the Slack chat.postMessage tool to post your reply to channel {channel}."""
+            max_steps = 3
+
+        elif request_type == "REPO_ANALYSIS":
+            # Use Captain knowledge base to answer questions about the repo
+            logger.info("📚 Handling as repo analysis (Captain + Slack)")
+
+            # Query Captain for repo information
+            # Extract the actual question from the user message
+            query = user_message.lower()
+            query = query.replace("*", "").strip()
+            query = query.replace("_", "").strip()
+            query = query.replace("northstar", "").strip()
+
+            # Remove common phrases
+            for phrase in ["tell me about", "what is", "what's", "describe", "explain"]:
+                query = query.replace(phrase, "").strip()
+
+            # If query is too generic or empty, use default
+            if not query or query in ["this repo", "the repo", "repo", "this", "is repo"]:
+                query = "What does this repository do? Describe the project, its purpose, and key features."
+
+            logger.info(f"User query: {query}")
+            logger.info(f"📥 Analyzing repo: {repo_fullname}")
+
+            # Clone repo and read important files directly
+            import tempfile
+            import shutil
+            from pathlib import Path
+            repo_path = None
+            response_text = ""
+
+            try:
+                # Clone repository to temp directory
+                temp_dir = tempfile.mkdtemp(prefix=f"northstar_analysis_")
+                repo_path = Path(temp_dir)
+                clone_repository(f"https://github.com/{repo_fullname}.git", repo_path)
+                logger.info(f"Cloned repo to {repo_path}")
+
+                # Identify important files to read
+                important_files = []
+
+                # 1. Always read README
+                readme_files = list(repo_path.glob("README*"))
+                for readme in readme_files[:1]:  # Take first README
+                    try:
+                        content = readme.read_text(encoding='utf-8', errors='ignore')
+                        important_files.append(f"=== {readme.name} ===\n{content[:3000]}")
+                        logger.info(f"Read {readme.name} ({len(content)} chars)")
+                    except Exception as e:
+                        logger.warning(f"Failed to read {readme.name}: {e}")
+
+                # 2. Read package.json or requirements.txt to understand dependencies
+                package_json = repo_path / "package.json"
+                if package_json.exists():
+                    try:
+                        content = package_json.read_text(encoding='utf-8', errors='ignore')
+                        important_files.append(f"=== package.json ===\n{content}")
+                        logger.info(f"Read package.json")
+                    except Exception as e:
+                        logger.warning(f"Failed to read package.json: {e}")
+
+                requirements = repo_path / "requirements.txt"
+                if requirements.exists():
+                    try:
+                        content = requirements.read_text(encoding='utf-8', errors='ignore')
+                        important_files.append(f"=== requirements.txt ===\n{content}")
+                        logger.info(f"Read requirements.txt")
+                    except Exception as e:
+                        logger.warning(f"Failed to read requirements.txt: {e}")
+
+                # 3. Get directory structure
+                structure_lines = []
+                for item in sorted(repo_path.rglob("*")):
+                    if ".git" in str(item) or "node_modules" in str(item) or "__pycache__" in str(item):
+                        continue
+                    rel_path = item.relative_to(repo_path)
+                    depth = len(rel_path.parts) - 1
+                    indent = "  " * depth
+                    if item.is_file():
+                        structure_lines.append(f"{indent}{item.name}")
+                    elif item.is_dir() and depth < 3:  # Only show up to 3 levels deep
+                        structure_lines.append(f"{indent}{item.name}/")
+                    if len(structure_lines) >= 100:  # Limit structure size
+                        break
+
+                structure = "\n".join(structure_lines[:100])
+                important_files.append(f"=== Repository Structure ===\n{structure}")
+                logger.info(f"Generated directory structure")
+
+                # 4. Read main entry point files
+                entry_points = [
+                    "index.js", "index.ts", "main.py", "app.py", "main.jsx", "App.jsx",
+                    "index.html", "main.go", "index.php"
+                ]
+                for entry in entry_points:
+                    entry_file = repo_path / "src" / entry if (repo_path / "src").exists() else repo_path / entry
+                    if entry_file.exists():
+                        try:
+                            content = entry_file.read_text(encoding='utf-8', errors='ignore')
+                            important_files.append(f"=== {entry} ===\n{content[:2000]}")
+                            logger.info(f"Read {entry}")
+                            break  # Only read first found entry point
+                        except Exception as e:
+                            logger.warning(f"Failed to read {entry}: {e}")
+
+                # Combine all context
+                full_context = "\n\n".join(important_files)
+                logger.info(f"Built context from {len(important_files)} files ({len(full_context)} total chars)")
+
+                # Query OpenAI with Captain's infinite context API
+                from openai import OpenAI
+
+                captain_client = OpenAI(
+                    base_url="https://api.runcaptain.com/v1",
+                    api_key=os.getenv("CAPTAIN_API_KEY"),
+                    default_headers={
+                        "X-Organization-ID": os.getenv("CAPTAIN_ORGANIZATION_ID")
+                    }
+                )
+
+                gpt_response = captain_client.chat.completions.create(
+                    model="captain-voyager-latest",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": f"You are analyzing the GitHub repository {repo_fullname} for a product manager audience. Focus on what the product does, its purpose, and user-facing features rather than technical implementation details. Provide specific, factual answers based ONLY on the repository files and content provided. Never say 'likely', never guess, and never ask clarifying questions. Answer directly and concisely in product language."
+                        },
+                        {
+                            "role": "user",
+                            "content": f"{query}\n\nProvide a direct, product-focused answer in 2-3 sentences. Emphasize what users can do with this product and its main value proposition."
+                        }
+                    ],
+                    extra_body={
+                        "captain": {
+                            "context": full_context
+                        }
+                    },
+                    max_tokens=200
+                )
+
+                response_text = gpt_response.choices[0].message.content.strip()
+                logger.info(f"✅ Captain infinite context response: {response_text[:200]}...")
+
+            except Exception as e:
+                logger.error(f"Repo analysis failed: {str(e)}")
+                import traceback
+                logger.error(traceback.format_exc())
+                response_text = f"I encountered an error while analyzing {repo_fullname}: {str(e)}"
+
+            finally:
+                # Cleanup cloned repo
+                if repo_path and os.path.exists(str(repo_path)):
+                    shutil.rmtree(str(repo_path))
+                    logger.info(f"Cleaned up {repo_path}")
+
+            # Now use Slack deployment to post the response
+            deployments = [
+                {"serverDeploymentId": slack_deployment_id, "oauthSessionId": slack_oauth_session_id}
+            ]
+            prompt = f"""Post this message to Slack channel {channel}:
+
+"{response_text}"
+
+Use the Slack chat.postMessage tool. Keep the message clean and helpful, no emojis."""
+            max_steps = 3
+
+        elif request_type == "CODE_CHANGE":
+            # Needs all tools: GitHub + Northstar + Slack
+            logger.info("🔧 Handling as code change (GitHub + Northstar + Slack)")
+            deployments = [
+                {"serverDeploymentId": slack_deployment_id, "oauthSessionId": slack_oauth_session_id},
+                {"serverDeploymentId": github_deployment_id},
+                {"serverDeploymentId": northstar_mcp_deployment_id}
+            ]
+            prompt = f"""User request: "{user_message}"
+Repository: {repo_fullname}
+Base branch: {base_branch}
+
+1. Use GitHub tools to browse the repo and find relevant files
+2. Analyze the code to understand what needs to change
+3. Generate a code diff (update_block with +/- markers)
+4. Call the execute_code_change tool with:
+   - instruction: Clear description
+   - update_block: Code diff with +/- markers
+   - repo: "{repo_fullname}"
+   - file_path: The file you identified
+   - base_branch: "{base_branch}"
+5. Post the PR URL to Slack channel {channel} using Slack chat.postMessage
+
+Style: Clean, direct, no emojis, no exclamation marks."""
+            max_steps = 25
+
+        else:  # EXPERIMENT_PROPOSAL or unknown
+            # Needs GitHub + Northstar + Slack
+            logger.info("🧪 Handling as experiment proposal (GitHub + Northstar + Slack)")
+            deployments = [
+                {"serverDeploymentId": slack_deployment_id, "oauthSessionId": slack_oauth_session_id},
+                {"serverDeploymentId": github_deployment_id},
+                {"serverDeploymentId": northstar_mcp_deployment_id}
+            ]
+            prompt = f"""User request: "{user_message}"
+Repository: {repo_fullname}
+
+1. Use GitHub tools to fetch codebase context
+2. Call propose_experiment tool with the codebase context
+3. Post the proposal to Slack channel {channel} using Slack chat.postMessage
+
+Style: Clean, professional, no emojis, no exclamation marks."""
+            max_steps = 20
+
+        logger.info(f"🚀 Stage 2: Executing with {len(deployments)} deployment(s), max_steps={max_steps}")
+
+        # Execute the actual task
+        result = await metorial.run(
+            client=openai_client,
+            message=prompt,
+            model="gpt-4o",
+            server_deployments=deployments,
+            max_steps=max_steps
+        )
+
+        logger.info(f"✅ Agent execution complete. Result: {result.text[:500]}...")
+
+        return result.text
+
+    except Exception as e:
+        logger.error(f"Error in autonomous agent: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+
+        # Try to post error to Slack
+        try:
+            if slack_deployment_id and slack_oauth_session_id:
+                error_result = await metorial.run(
+                    client=openai_client,
+                    message=f'Post this message to Slack channel {channel}: "Sorry, I encountered an error: {str(e)[:200]}"',
+                    model="gpt-4o",
+                    server_deployments=[{
+                        "serverDeploymentId": slack_deployment_id,
+                        "oauthSessionId": slack_oauth_session_id
+                    }],
+                    max_steps=2
+                )
+        except Exception as slack_error:
+            logger.error(f"Failed to post error to Slack: {str(slack_error)}")
+
+        return f"Error: {str(e)}"
+
+
+@app.post("/test-agent")
+async def test_agent():
+    """Test endpoint to verify the agent works."""
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info("Test agent endpoint called")
+
+    # Test with a simple message
+    result = await run_autonomous_agent(
+        user_message="hey northstar",
+        channel="test-channel",
+        user_id="test-user"
+    )
+
+    return {"status": "success", "result": result}
+
+
+@app.post("/test-slack-post")
+async def test_slack_post(channel: str = "C09QL9V1J1F"):
+    """Test endpoint to directly post to Slack using Metorial."""
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Testing Slack post to channel {channel}")
+
+    try:
+        result = await metorial.run(
+            client=openai_client,
+            message=f'Use the Slack post_message tool to post "Test message from Northstar backend" to channel {channel}',
+            model="gpt-4o",
+            server_deployments=[{
+                "serverDeploymentId": slack_deployment_id,
+                "oauthSessionId": slack_oauth_session_id
+            }],
+            max_steps=3
+        )
+
+        logger.info(f"Slack post result: {result.text}")
+        return {"status": "success", "result": result.text}
+    except Exception as e:
+        logger.error(f"Error posting to Slack: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return {"status": "error", "error": str(e)}
+
+
 @app.post("/slack/events")
 async def slack_events(request: Request):
     """
@@ -2003,9 +2389,68 @@ async def slack_events(request: Request):
     - Direct messages to the bot
     - App mentions (@northstar)
 
-    The bot responds conversationally using GPT-4o.
+    Routes to the autonomous agent for reasoning and execution.
     """
-    return await handle_slack_event(request)
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        body = await request.json()
+        logger.info(f"📨 Received Slack event: {body.get('type')}")
+
+        # Handle URL verification challenge
+        if body.get("type") == "url_verification":
+            logger.info("URL verification challenge received")
+            return {"challenge": body.get("challenge")}
+
+        # Handle app_mention or message events
+        event = body.get("event", {})
+        event_type = event.get("type")
+        logger.info(f"Event type: {event_type}")
+
+        # Ignore bot messages to prevent loops
+        if event.get("bot_id"):
+            logger.info(f"Ignoring bot message (bot_id: {event.get('bot_id')})")
+            return {"ok": True}
+
+        if event.get("subtype") == "bot_message":
+            logger.info("Ignoring bot message (subtype: bot_message)")
+            return {"ok": True}
+
+        # Check if message mentions "northstar" (case-insensitive)
+        text = event.get("text", "")
+        text_lower = text.lower()
+        logger.info(f"Message text: '{text}' (searching for 'northstar')")
+
+        if "northstar" not in text_lower:
+            logger.info("Message doesn't mention 'northstar', ignoring")
+            return {"ok": True}
+
+        # Extract channel and original message
+        channel = event.get("channel")
+        user_message = event.get("text", "")
+        user_id = event.get("user")
+
+        logger.info(f"✅ Northstar mentioned by user {user_id} in channel {channel}: {user_message}")
+        logger.info(f"🚀 Starting autonomous agent in background...")
+
+        # Run the autonomous agent (non-blocking)
+        # Note: We return immediately to Slack, agent runs in background
+        import asyncio
+        asyncio.create_task(run_autonomous_agent(
+            user_message=user_message,
+            channel=channel,
+            user_id=user_id
+        ))
+
+        logger.info("✓ Agent task created, returning OK to Slack")
+        return {"ok": True}
+
+    except Exception as e:
+        logger.error(f"Error handling Slack event: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/slack/commands")
@@ -2017,8 +2462,44 @@ async def slack_commands(request: Request):
     - /northstar help
     - /northstar propose experiment
     - /northstar status
+
+    Routes to the autonomous agent for reasoning and execution.
     """
-    return await handle_slash_command(request)
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        form_data = await request.form()
+
+        command = form_data.get("command")
+        text = form_data.get("text", "")
+        user_id = form_data.get("user_id")
+        channel_id = form_data.get("channel_id")
+
+        logger.info(f"Slash command {command} from user {user_id}: {text}")
+
+        # Respond immediately (Slack requires response within 3 seconds)
+        response = {
+            "response_type": "in_channel",
+            "text": f"Processing your request: {text}"
+        }
+
+        # Run the autonomous agent (non-blocking)
+        import asyncio
+        asyncio.create_task(run_autonomous_agent(
+            user_message=text,
+            channel=channel_id,
+            user_id=user_id
+        ))
+
+        return response
+
+    except Exception as e:
+        logger.error(f"Error handling slash command: {str(e)}")
+        return {
+            "response_type": "ephemeral",
+            "text": f"Error processing command: {str(e)}"
+        }
 
 
 if __name__ == "__main__":
