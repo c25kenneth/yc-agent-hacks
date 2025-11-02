@@ -29,11 +29,18 @@ metorial.createServer<Config>(
       {
         title: "Propose Experiment",
         description:
-          "Generate an experiment proposal to improve product metrics",
-        inputSchema: {},
+          "Generate an experiment proposal with UI/visual code changes to improve product metrics. FOCUS ON UI ADJUSTMENTS: styling, layout, colors, spacing, typography, visual hierarchy, button styling, form styling, responsive design, hover states, transitions, and visual polish. Requires codebase context to analyze and propose specific UI improvements with code changes.",
+        inputSchema: {
+          codebase_context: z.string().optional().describe(
+            "Repository codebase context or code snippets to analyze. This should include actual UI/styling code from the repository (CSS, Tailwind classes, inline styles, component styling, HTML structure, React/Flutter UI components) so the tool can propose specific UI/visual improvements with code changes."
+          ),
+          repo_fullname: z.string().optional().describe(
+            "Repository name in format 'owner/repo' (optional, for reference)"
+          ),
+        },
       },
-      async () => {
-        return await proposeExperiment();
+      async ({ codebase_context, repo_fullname }) => {
+        return await proposeExperiment(codebase_context, repo_fullname);
       }
     );
 
@@ -43,7 +50,7 @@ metorial.createServer<Config>(
       {
         title: "Execute Code Change",
         description:
-          "Execute a code change using Morph Fast Apply and create a GitHub PR",
+          "Execute a code change using Morph Fast Apply and create a GitHub PR. This tool has full access to Git, GitHub API, and Morph API. It can clone repositories, modify files, create branches, push changes, and create pull requests. Use this tool to execute code changes - it has all required access to external systems.",
         inputSchema: {
           instruction: z.string().describe(
             "Natural language description of the code change"
@@ -75,80 +82,70 @@ metorial.createServer<Config>(
   }
 );
 
-async function proposeExperiment() {
+async function proposeExperiment(
+  codebaseContext?: string,
+  repoFullname?: string
+) {
   /**
-   * Generate a hardcoded experiment proposal.
+   * Generate an experiment proposal with actual code changes.
+   *
+   * Args:
+   *   codebaseContext: Repository codebase context or code snippets to analyze
+   *   repoFullname: Repository name for reference
    *
    * Returns:
-   *   Experiment proposal as JSON
+   *   Experiment proposal as JSON with update_block containing actual code changes
    */
-  // Hardcoded proposals for MVP demo
-  const proposals = [
-    {
-      proposal_id: "exp-001",
-      idea_summary: "Simplify checkout form by reducing fields from 8 to 4",
-      rationale:
-        "Competitor analysis shows that simpler checkout flows improve conversion. Removing optional fields reduces friction.",
-      expected_impact: {
-        metric: "checkout_conversion",
-        delta_pct: 0.048,
-      },
-      technical_plan: [
+  
+  // If no codebase context provided, return error message
+  if (!codebaseContext || codebaseContext.trim().length === 0) {
+    return {
+      content: [
         {
-          file: "checkout.html",
-          action: "Remove optional address fields and combine name fields",
+          type: "text",
+          text: JSON.stringify({
+            error: "codebase_context_required",
+            message: "This tool requires codebase context to analyze and propose specific code improvements. Please provide actual code from the repository (not just repository metadata or file listings). The codebase_context should include source code files (JavaScript, TypeScript, Python, Dart, HTML, CSS, etc.) so I can analyze the actual code and propose specific improvements with code changes.",
+            hint: "Include actual source code files in the codebase_context parameter. You can fetch repository files using GitHub APIs or other code fetching tools before calling this tool.",
+          }, null, 2),
         },
       ],
-      category: "checkout_optimization",
-      confidence: 0.75,
-    },
-    {
-      proposal_id: "exp-002",
-      idea_summary: "Add trust badges below payment button",
-      rationale:
-        "Security concerns are a top barrier to conversion. Trust badges from SSL provider can increase confidence.",
-      expected_impact: {
-        metric: "checkout_conversion",
-        delta_pct: 0.032,
-      },
-      technical_plan: [
-        {
-          file: "checkout.html",
-          action: "Add SSL badge and money-back guarantee icon below CTA",
-        },
-      ],
-      category: "trust_building",
-      confidence: 0.68,
-    },
-    {
-      proposal_id: "exp-003",
-      idea_summary: "Optimize button color for higher visibility",
-      rationale:
-        "Current button (#3b82f6) has low contrast ratio. Increasing to high-contrast green can improve click rate.",
-      expected_impact: {
-        metric: "cta_click_rate",
-        delta_pct: 0.056,
-      },
-      technical_plan: [
-        {
-          file: "styles.css",
-          action:
-            "Change primary button color from blue to high-contrast green (#10b981)",
-        },
-      ],
-      category: "ui_optimization",
-      confidence: 0.62,
-    },
-  ];
+    };
+  }
 
-  // Return first proposal for demo
-  const proposal = proposals[0];
+  // Echo the codebase context back with instructions
+  // This makes it clear to Metorial that the code is already provided
+  const fullContext = codebaseContext.length > 20000 
+    ? codebaseContext.substring(0, 20000) + `\n\n... (${codebaseContext.length - 20000} more characters truncated for display)`
+    : codebaseContext;
+    
+  const responseMessage = `CODEBASE CONTEXT FOR ${repoFullname || "the repository"}:
+
+This is the ACTUAL repository code that was fetched and provided to you. You MUST analyze this code to generate a proposal. The code is already provided below - you don't need to fetch anything.
+
+=== REPOSITORY CODE (ANALYZE THIS) ===
+
+${fullContext}
+
+=== YOUR TASK ===
+
+1. ANALYZE the code above - look for UI/styling code (CSS, Tailwind classes, inline styles, component styling)
+2. IDENTIFY UI/visual problems (styling issues, layout problems, visual design flaws)
+3. GENERATE proposal JSON with ACTUAL code changes
+
+CRITICAL: FOCUS ON UI/VISUAL ADJUSTMENTS ONLY (styling, layout, colors, typography, hover states, visual polish)
+IGNORE: Functional logic, backend code, configuration files
+
+Return ONLY this JSON (no explanations, no markdown, no text before/after):
+{"proposal_id":"exp-unique","idea_summary":"Specific UI improvement based on code analysis","rationale":"Detailed explanation of UI problem found","expected_impact":{"metric":"click_rate","delta_pct":0.05},"technical_plan":[{"file":"path/to/style/file.ext","action":"Styling change description"}],"update_block":"ACTUAL CODE with +/- markers showing styling changes","category":"ui_optimization","confidence":0.8}
+
+The update_block MUST contain actual code with +/- markers, not instructions.`;
 
   return {
     content: [
       {
         type: "text",
-        text: JSON.stringify(proposal, null, 2),
+        text: responseMessage,
       },
     ],
   };

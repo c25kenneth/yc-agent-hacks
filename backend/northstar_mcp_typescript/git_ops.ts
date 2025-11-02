@@ -9,7 +9,15 @@
  */
 export async function cloneRepo(repoFullname: string): Promise<string> {
   const tempDir = await Deno.makeTempDir({ prefix: "northstar_" });
-  const cloneUrl = `https://github.com/${repoFullname}.git`;
+  const githubToken = Deno.env.get("GITHUB_TOKEN");
+  
+  // Build clone URL with token if available (for private repos or authenticated cloning)
+  let cloneUrl: string;
+  if (githubToken) {
+    cloneUrl = `https://${githubToken}@github.com/${repoFullname}.git`;
+  } else {
+    cloneUrl = `https://github.com/${repoFullname}.git`;
+  }
 
   const cloneCmd = new Deno.Command("git", {
     args: ["clone", cloneUrl, tempDir],
@@ -27,6 +35,17 @@ export async function cloneRepo(repoFullname: string): Promise<string> {
         `Error: ${errorText}\n` +
         `Hint: Verify the repository exists and is accessible.`
     );
+  }
+
+  // Configure remote URL with token for authenticated pushes
+  if (githubToken) {
+    const setRemoteCmd = new Deno.Command("git", {
+      args: ["remote", "set-url", "origin", `https://${githubToken}@github.com/${repoFullname}.git`],
+      cwd: tempDir,
+      stdout: "piped",
+      stderr: "piped",
+    });
+    await setRemoteCmd.output();
   }
 
   return tempDir;

@@ -22,10 +22,16 @@ Set the following environment variables:
 # Required for execute_code_change
 TARGET_REPO=owner/repo          # Default repository (optional if provided in tool call)
 TARGET_FILE=path/to/file        # Default file path (optional if provided in tool call)
-GITHUB_TOKEN=your_github_token  # Required for creating PRs
+GITHUB_TOKEN=your_github_token  # Required for creating PRs - see GITHUB_SETUP.md
 MORPH_API_KEY=your_morph_key    # Required for Morph Fast Apply
 MORPH_BASE_URL=https://api.morphllm.com/v1  # Optional, defaults to this value
 ```
+
+**⚠️ Important**: To enable pull request creation, you must:
+1. Create a GitHub Personal Access Token (PAT) with `repo` scope
+2. Set the `GITHUB_TOKEN` environment variable in your deployment
+
+See **[GITHUB_SETUP.md](./GITHUB_SETUP.md)** for detailed instructions on setting up GitHub authentication.
 
 ## Installation
 
