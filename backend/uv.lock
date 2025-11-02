@@ -198,6 +198,7 @@ dependencies = [
     { name = "langchain" },
     { name = "langchain-openai" },
     { name = "metorial" },
+    { name = "python-dotenv" },
 ]
 
 [package.metadata]
@@ -206,6 +207,7 @@ requires-dist = [
     { name = "langchain", specifier = ">=1.0.3" },
     { name = "langchain-openai", specifier = ">=1.0.1" },
     { name = "metorial", specifier = ">=1.0.11" },
+    { name = "python-dotenv", specifier = ">=1.2.1" },
 ]
 
 [[package]]
