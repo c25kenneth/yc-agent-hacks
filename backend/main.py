@@ -1,49 +1,51 @@
-Python
-example.py
 import asyncio
 import os
 from dotenv import load_dotenv
+import google.generativeai as genai
+from metorial import Metorial
+from openai import AsyncOpenAI
 
 load_dotenv()
 
-from metorial import Metorial
-from anthropic import AsyncAnthropic
-
-
 async def main():
-  metorial = Metorial(api_key=os.getenv("METORIAL_API_KEY"))
-  anthropic = AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    # --- Setup clients ---
+    metorial = Metorial(api_key=os.getenv("METORIAL_API_KEY"))
 
-  google_cal_deployment_id = os.getenv("GOOGLE_CALENDAR_DEPLOYMENT_ID")
+    openai = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-  print("🔗 Creating OAuth session...")
-  oauth_session = metorial.oauth.sessions.create(
-    server_deployment_id=google_cal_deployment_id
-  )
 
-  print("OAuth URLs for user authentication:")
-  print(f"   Google Calendar: {oauth_session.url}")
+    slack_deployment_id = os.getenv("SLACK_DEPLOYMENT_ID")
 
-  print("\n⏳ Waiting for OAuth completion...")
-  await metorial.oauth.wait_for_completion([oauth_session])
+    # --- Step 1: Create OAuth session for Slack ---
+    print("🔗 Creating OAuth session...")
+    oauth_session = metorial.oauth.sessions.create(
+        server_deployment_id= slack_deployment_id
+    )
 
-  print("✅ OAuth session completed!")
+    print("OAuth URLs for user authentication:") 
+    print(f" Slack: {oauth_session.url}") 
+    print("\n⏳ Waiting for OAuth completion...") 
+    await metorial.oauth.wait_for_completion([oauth_session])
 
-  hackernews_deployment_id = os.getenv("HACKERNEWS_DEPLOYMENT_ID")
+    # --- Step 2: Send a message using Gemini as the reasoning model ---
+    prompt = "Send a Slack message to a channel saying 'Hello from Gemini + Metorial! 🎉'"
 
-  result = await metorial.run(
-    message="""Search Hackernews for the latest AI discussions. Then create a
-    calendar event with my@email.address for tomorrow at 2pm to discuss AI trends.""",
-    server_deployments=[
-      { "serverDeploymentId": hackernews_deployment_id },
-      { "serverDeploymentId": google_cal_deployment_id, "oauthSessionId": oauth_session.id },
-    ],
-    client=anthropic,
-    model="claude-sonnet-4-20250514",
-    max_tokens=4096,
-    max_steps=25,
-  )
-  print(result.text)
+    result = await metorial.run(
+        message=prompt,
+        client=openai,
+        model="gpt-4o",
+        server_deployments=[
+            {
+                "serverDeploymentId": slack_deployment_id,
+                "oauthSessionId": oauth_session.id
+            }
+        ],
+        max_steps=10,
+
+    )
+
+    print("\n✅ Result from Metorial:")
+    print(result.text)
 
 if __name__ == "__main__":
-  asyncio.run(main())
+    asyncio.run(main())
