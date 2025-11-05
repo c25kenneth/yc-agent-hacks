@@ -64,14 +64,26 @@ export default function Landing() {
             Northstar monitors your metrics and recommends AI-driven code changes
             that directly improve performance — conversion rate, retention, or revenue.
           </p>
-          <a
-            href="https://tally.so/r/worWMX"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-xl bg-white px-10 py-4 text-lg font-medium text-black hover:bg-gray-100 transition mt-4 shadow-lg hover:shadow-xl"
-          >
-            Join Early Access →
-          </a>
+
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-6">
+            <a
+              href="https://tally.so/r/worWMX"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl bg-white px-10 py-4 text-lg font-medium text-black hover:bg-gray-100 transition shadow-lg hover:shadow-xl"
+            >
+              Join Early Access →
+            </a>
+            <a
+              href="https://cal.com/your-cal-link" // replace with your real Cal.com or Calendly link
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl border border-white/40 px-10 py-4 text-lg font-medium text-white hover:bg-white/10 transition"
+            >
+              Schedule a Demo
+            </a>
+          </div>
         </motion.section>
 
         {/* Demo Video */}
@@ -89,11 +101,7 @@ export default function Landing() {
               boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
             }}
           >
-            <video
-              className="h-full w-full object-cover"
-              controls
-              src={exampleVideo}
-            >
+            <video className="h-full w-full object-cover" controls src={exampleVideo}>
               Your browser does not support the video tag.
             </video>
           </div>
@@ -137,9 +145,7 @@ export default function Landing() {
               className="flex flex-col items-center gap-3 px-4 py-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-gray-800"
             >
               <div className="text-2xl font-medium text-white">{item.title}</div>
-              <div className="text-gray-400 text-base leading-relaxed">
-                {item.desc}
-              </div>
+              <div className="text-gray-400 text-base leading-relaxed">{item.desc}</div>
             </div>
           ))}
         </motion.section>
@@ -190,14 +196,10 @@ export default function Landing() {
             {faqs.map((faq, index) => (
               <div key={index} className="py-5 px-6">
                 <button
-                  onClick={() =>
-                    setOpenIndex(openIndex === index ? null : index)
-                  }
+                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
                   className="w-full flex justify-between items-center text-left"
                 >
-                  <span className="text-lg text-gray-200 font-medium">
-                    {faq.question}
-                  </span>
+                  <span className="text-lg text-gray-200 font-medium">{faq.question}</span>
                   <span className="text-gray-400 text-2xl">
                     {openIndex === index ? "−" : "+"}
                   </span>
@@ -211,9 +213,7 @@ export default function Landing() {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <p className="mt-3 text-gray-400 text-sm leading-relaxed">
-                        {faq.answer}
-                      </p>
+                      <p className="mt-3 text-gray-400 text-sm leading-relaxed">{faq.answer}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -232,14 +232,24 @@ export default function Landing() {
           <h3 className="text-2xl md:text-3xl font-light text-gray-100 mb-4">
             Your product’s next growth engineer is AI.
           </h3>
-          <a
-            href="https://tally.so/r/worWMX"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-xl bg-white px-10 py-4 text-lg font-medium text-black hover:bg-gray-100 transition shadow-lg hover:shadow-xl"
-          >
-            Join Early Access →
-          </a>
+          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+            <a
+              href="https://tally.so/r/worWMX"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl bg-white px-10 py-4 text-lg font-medium text-black hover:bg-gray-100 transition shadow-lg hover:shadow-xl"
+            >
+              Join Early Access →
+            </a>
+            <a
+              href="https://cal.com/your-cal-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl border border-white/40 px-10 py-4 text-lg font-medium text-white hover:bg-white/10 transition"
+            >
+              Schedule a Demo
+            </a>
+          </div>
         </motion.section>
       </main>
     </div>
